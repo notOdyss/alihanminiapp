@@ -102,6 +102,29 @@ export const DataProvider = ({ children }) => {
     refreshData: fetchData,
     createReferralCode,
     getReferralCode,
+    lookupBuyer: async (email) => {
+      if (!tg?.initData) return null
+      try {
+        const headers = { 'X-Telegram-Init-Data': tg.initData }
+        const res = await fetch(`${API_URL}/buyer/lookup?email=${encodeURIComponent(email)}`, { headers })
+        if (!res.ok) throw new Error('Failed to lookup')
+        return await res.json()
+      } catch (e) {
+        console.error(e)
+        return null
+      }
+    },
+    checkAccessStatus: async () => {
+      if (!tg?.initData) return null
+      try {
+        const headers = { 'X-Telegram-Init-Data': tg.initData }
+        const res = await fetch(`${API_URL}/access-status`, { headers })
+        return await res.json()
+      } catch (e) {
+        console.error(e)
+        return null
+      }
+    },
   }
 
   return (

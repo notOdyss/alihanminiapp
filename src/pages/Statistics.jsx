@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
 import { useLanguage } from '../context/LanguageContext'
+import BuyerLookup from '../components/BuyerLookup'
 import './Statistics.css'
 
 export default function Statistics() {
@@ -78,15 +79,7 @@ export default function Statistics() {
           </div>
         </div>
       ) : (
-        <div className="empty-state">
-          <svg className="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <line x1="18" y1="20" x2="18" y2="10"/>
-            <line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="14"/>
-          </svg>
-          <p>{t('buyerStatsUnavailable')}</p>
-          <span>{t('buyerStatsAppear')}</span>
-        </div>
+        <BuyerLookup />
       )}
     </div>
   )

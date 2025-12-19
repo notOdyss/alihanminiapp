@@ -86,6 +86,17 @@ const translations = {
     spent: 'потрачено',
     unlockVip: 'До VIP статуса',
 
+    // Buyer Lookup
+    enterEmail: 'Введите email покупателя',
+    lookup: 'Найти',
+    buyerFound: 'Покупатель найден',
+    buyerNotFound: 'Покупатель не найден',
+    firstSeen: 'Первая покупка',
+    lastSeen: 'Последняя покупка',
+    uniquePartners: 'Уникальных партнеров',
+    premiumFeature: 'Премиум функция',
+    premiumFeatureDesc: 'Для доступа нужен оборот >$1000 за 30 дней.',
+
     // Loading
     loading: 'Загрузка...',
   },
@@ -171,6 +182,17 @@ const translations = {
     vipProgress: 'VIP Progress',
     spent: 'spent',
     unlockVip: 'Until VIP status',
+
+    // Buyer Lookup
+    enterEmail: 'Enter buyer email',
+    lookup: 'Lookup',
+    buyerFound: 'Buyer Found',
+    buyerNotFound: 'Buyer not found',
+    firstSeen: 'First seen',
+    lastSeen: 'Last seen',
+    uniquePartners: 'Unique partners',
+    premiumFeature: 'Premium Feature',
+    premiumFeatureDesc: 'You need >$1000 volume in the last 30 days to use this feature.',
 
     // Loading
     loading: 'Loading...',
