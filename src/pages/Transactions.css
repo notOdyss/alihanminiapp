@@ -1,218 +1,401 @@
 .transactions-page {
-  padding-bottom: 20px;
+  padding-bottom: 100px;
+  min-height: 100vh;
 }
 
+/* Stats Overview - Premium Cards */
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 0 20px 20px;
+  padding: 0 var(--space-lg) var(--space-lg);
 }
 
 .stat-card {
-  background: var(--tg-theme-secondary-bg-color);
-  padding: 16px;
+  background: var(--bg-card);
+  padding: 20px;
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--bg-glass-border);
+  box-shadow: var(--shadow-card);
   transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
 }
 
-.stat-card:active {
-  transform: scale(0.98);
-  box-shadow: var(--shadow-md);
+.stat-card:first-child {
+  animation-delay: 0.1s;
+}
+
+.stat-card:last-child {
+  animation-delay: 0.15s;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-purple);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .stat-label {
-  font-size: 13px;
-  color: var(--tg-theme-hint-color);
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.date-range {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 0 20px 20px;
-}
-
-.date-item {
-  background: var(--bg-secondary);
-  padding: 16px;
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.date-item span {
   font-size: 12px;
-  color: var(--tg-theme-hint-color);
+  color: var(--text-secondary);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Date Range Cards */
+.date-range {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+.date-item {
+  background: var(--bg-tertiary);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--bg-glass-border);
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+  animation-delay: 0.2s;
+}
+
+.date-item span {
+  font-size: 11px;
+  color: var(--text-hint);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
 .date-item strong {
-  font-size: 14px;
-  color: var(--tg-theme-text-color);
+  font-size: 13px;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
+/* VIP Progress - Premium Design */
 .vip-progress {
-  margin: 0 20px 24px;
+  margin: 0 var(--space-lg) var(--space-lg);
   padding: 20px;
-  background: var(--tg-theme-secondary-bg-color);
+  background: var(--bg-card);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--bg-glass-border);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+  animation-delay: 0.25s;
+}
+
+.vip-progress::before {
+  content: '👑';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  opacity: 0.3;
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   font-size: 13px;
   font-weight: 600;
 }
 
 .progress-header span:first-child {
-  color: var(--tg-theme-hint-color);
+  color: var(--text-secondary);
 }
 
 .progress-header span:last-child {
-  color: var(--tg-theme-text-color);
+  color: var(--accent-gold);
 }
 
 .progress-bar {
-  height: 8px;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 10px;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
   overflow: hidden;
   position: relative;
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--primary-gradient);
-  border-radius: 10px;
-  transition: width var(--transition-slow);
+  background: var(--gradient-gold);
+  border-radius: var(--radius-full);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  box-shadow: 0 0 20px rgba(245, 175, 25, 0.4);
 }
 
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  animation: shimmer 2s infinite;
+}
 
+/* Transactions List */
 .transactions-list {
-  padding: 0 20px;
+  padding: 0 var(--space-lg);
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .transaction-item {
-  background: var(--tg-theme-secondary-bg-color);
+  background: var(--bg-card);
   padding: 16px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  border: 1px solid var(--bg-glass-border);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-base);
+  animation: slideInRight 0.4s ease forwards;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.transaction-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.transaction-item:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.transaction-item:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.transaction-item:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.transaction-item:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.transaction-item:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+.transaction-item:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+.transaction-item:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+.transaction-item:nth-child(9) {
+  animation-delay: 0.45s;
+}
+
+.transaction-item:nth-child(10) {
+  animation-delay: 0.5s;
+}
+
+.transaction-item:hover {
+  transform: translateX(4px);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .transaction-item:active {
   transform: scale(0.98);
-  box-shadow: var(--shadow-md);
 }
 
+/* Transaction Icon */
 .tx-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  color: var(--accent-purple);
+  background: var(--gradient-primary);
+  border-radius: var(--radius-md);
+  color: white;
   flex-shrink: 0;
+  box-shadow: var(--shadow-button);
 }
 
+.tx-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Transaction Details */
 .tx-details {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .tx-details strong {
   font-size: 15px;
   font-weight: 600;
-  color: var(--tg-theme-text-color);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tx-details span {
-  font-size: 13px;
-  color: var(--tg-theme-hint-color);
+  font-size: 12px;
+  color: var(--text-hint);
 }
 
+/* Transaction Amount */
 .tx-amount {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .tx-amount strong {
   font-size: 16px;
   font-weight: 700;
-  color: var(--tg-theme-text-color);
+  color: var(--text-primary);
 }
 
+/* Status Badges */
 .tx-status {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
+}
+
+.tx-status::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .status-completed {
-  background: rgba(17, 153, 142, 0.15);
-  color: #11998e;
+  background: rgba(0, 201, 167, 0.15);
+  color: var(--status-completed);
+}
+
+.status-completed::before {
+  animation: pulse 2s infinite;
 }
 
 .status-pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
+  background: rgba(245, 175, 25, 0.15);
+  color: var(--status-pending);
+}
+
+.status-pending::before {
+  animation: pulse 1.5s infinite;
 }
 
 .status-cancelled {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--status-failed);
 }
 
-@media (max-width: 360px) {
+/* Empty State */
+.transactions-page .empty-state {
+  margin-top: 40px;
+}
+
+.transactions-page .empty-icon {
+  width: 80px;
+  height: 80px;
+  opacity: 0.15;
+  color: var(--text-hint);
+}
+
+/* Skeleton Loading */
+.skeleton-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+.skeleton-stat-card {
+  height: 90px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-tx {
+  height: 76px;
+  margin: 0 var(--space-lg) 12px;
+}
+
+/* Responsive */
+@media (max-width: 380px) {
   .stat-value {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .tx-icon {
     width: 40px;
     height: 40px;
-    font-size: 20px;
   }
 
   .tx-amount strong {
     font-size: 14px;
+  }
+
+  .tx-status {
+    font-size: 9px;
+    padding: 3px 8px;
   }
 }
