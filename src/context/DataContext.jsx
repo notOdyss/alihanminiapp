@@ -3,7 +3,8 @@ import { useTelegram } from './TelegramContext'
 
 const DataContext = createContext(null)
 
-const API_URL = 'http://localhost:8080/api'
+// ⚠️ HARDCODED URL FOR PRODUCTION - CHANGE IF NGROK RESTARTS
+const API_URL = 'https://floy-effluvial-chaim.ngrok-free.dev/api'
 
 export const DataProvider = ({ children }) => {
   const { tg, user } = useTelegram()
@@ -22,75 +23,54 @@ export const DataProvider = ({ children }) => {
     avgSumMonth: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [debugLogs, setDebugLogs] = useState([])
+
+  const addLog = (msg) => {
+    console.log(msg)
+    setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10))
+  }
 
   useEffect(() => {
-    if (user) {
-      fetchData()
-    }
+    // Force fetch on mount even if no user (for debug)
+    fetchData()
   }, [user])
 
   const fetchData = async () => {
-    if (!tg?.initData) {
-      setLoading(false)
-      return
+    addLog(`Fetching data... User: ${user?.username || 'unknown'}`)
+
+    const headers = {
+      'ngrok-skip-browser-warning': 'true',
+      'Content-Type': 'application/json'
+    }
+
+    if (tg?.initData) {
+      headers['X-Telegram-Init-Data'] = tg.initData
     }
 
     try {
-      const headers = {
-        'X-Telegram-Init-Data': tg.initData,
-      }
-
-      const [balanceData, statsData, txsData] = await Promise.all([
-        fetch(`${API_URL}/balance`, { headers }).then(r => r.json()),
-        fetch(`${API_URL}/statistics`, { headers }).then(r => r.json()),
-        fetch(`${API_URL}/transactions?limit=50`, { headers }).then(r => r.json())
-      ])
-
+      // 1. Fetch Balance
+      const balanceRes = await fetch(`${API_URL}/balance`, { headers })
+      if (!balanceRes.ok) throw new Error(`Balance failed: ${balanceRes.status}`)
+      const balanceData = await balanceRes.json()
+      addLog(`Balance Loaded: $${balanceData.total}`)
       setBalance(balanceData)
+
+      // 2. Fetch Stats
+      const statsRes = await fetch(`${API_URL}/statistics`, { headers })
+      const statsData = await statsRes.json()
       setStats(statsData)
+
+      // 3. Fetch Transactions
+      const txsRes = await fetch(`${API_URL}/transactions?limit=50`, { headers })
+      const txsData = await txsRes.json()
+      addLog(`Transactions: ${txsData.transactions?.length || 0}`)
       setTransactions(txsData.transactions || [])
 
+    } catch (error) {
+      addLog(`ERROR: ${error.message}`)
+      console.error(error)
+    } finally {
       setLoading(false)
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-      setLoading(false)
-    }
-  }
-
-  const createReferralCode = async () => {
-    if (!tg?.initData) return null
-
-    try {
-      const headers = {
-        'X-Telegram-Init-Data': tg.initData,
-      }
-
-      const response = await fetch(`${API_URL}/referral`, {
-        method: 'POST',
-        headers
-      })
-      const data = await response.json()
-      return data.code
-    } catch (error) {
-      console.error('Error creating referral code:', error)
-      return null
-    }
-  }
-
-  const getReferralCode = async () => {
-    if (!tg?.initData) return null
-
-    try {
-      const headers = {
-        'X-Telegram-Init-Data': tg.initData,
-      }
-
-      const response = await fetch(`${API_URL}/referral`, { headers })
-      const data = await response.json()
-      return data.code
-    } catch (error) {
-      console.error('Error getting referral code:', error)
-      return null
     }
   }
 
@@ -99,13 +79,12 @@ export const DataProvider = ({ children }) => {
     balance,
     stats,
     loading,
+    debugLogs,
     refreshData: fetchData,
-    createReferralCode,
-    getReferralCode,
     lookupBuyer: async (email) => {
       if (!tg?.initData) return null
       try {
-        const headers = { 'X-Telegram-Init-Data': tg.initData }
+        const headers = { 'X-Telegram-Init-Data': tg.initData, 'ngrok-skip-browser-warning': 'true' }
         const res = await fetch(`${API_URL}/buyer/lookup?email=${encodeURIComponent(email)}`, { headers })
         if (!res.ok) throw new Error('Failed to lookup')
         return await res.json()
@@ -117,7 +96,7 @@ export const DataProvider = ({ children }) => {
     checkAccessStatus: async () => {
       if (!tg?.initData) return null
       try {
-        const headers = { 'X-Telegram-Init-Data': tg.initData }
+        const headers = { 'X-Telegram-Init-Data': tg.initData, 'ngrok-skip-browser-warning': 'true' }
         const res = await fetch(`${API_URL}/access-status`, { headers })
         return await res.json()
       } catch (e) {

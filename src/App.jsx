@@ -21,6 +21,43 @@ function LoadingScreen() {
   )
 }
 
+import { useData } from './context/DataContext'
+
+function DebugOverlay() {
+  const { debugLogs, loading } = useData()
+  const [expanded, setExpanded] = useState(false)
+
+  if (!expanded) {
+    return (
+      <div
+        onClick={() => setExpanded(true)}
+        style={{
+          position: 'fixed', bottom: 10, right: 10,
+          background: 'rgba(0,0,0,0.8)', color: '#0f0',
+          padding: '5px 10px', borderRadius: '5px', fontSize: '10px', zIndex: 9999
+        }}
+      >
+        DEBUG {loading ? '...' : 'OK'}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0,
+      background: 'rgba(0,0,0,0.9)', color: '#0f0',
+      padding: '10px', fontSize: '10px', zIndex: 9999,
+      maxHeight: '30vh', overflowY: 'auto'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+        <strong>DEBUG LOGS</strong>
+        <button onClick={() => setExpanded(false)} style={{ color: '#fff' }}>CLOSE</button>
+      </div>
+      {debugLogs.map((log, i) => <div key={i}>{log}</div>)}
+    </div>
+  )
+}
+
 function App() {
   const [loading, setLoading] = useState(true)
 
@@ -66,6 +103,7 @@ function App() {
                 <Route path="more" element={<More />} />
               </Route>
             </Routes>
+            <DebugOverlay />
           </BrowserRouter>
         </DataProvider>
       </LanguageProvider>
