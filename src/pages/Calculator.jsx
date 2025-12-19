@@ -21,23 +21,39 @@ export default function Calculator() {
       return
     }
 
-    // Комиссия метода оплаты (PayPal/Bank/Stripe)
+    // Шаг 1: Комиссия платежной системы (PayPal 6%, Bank 8.5%, Stripe 7%)
     const exchangeFee = (saleAmount * method.fee) / 100
+    const afterExchangeFee = saleAmount - exchangeFee
 
-    // Внутренняя комиссия: $5 + 6%
-    const internalFee = 5 + (saleAmount * 6) / 100
+    // Шаг 2: Процентная часть внутренней комиссии (7% от исходной суммы)
+    const internalFeePercent = (saleAmount * 7) / 100
+    const afterInternalPercent = afterExchangeFee - internalFeePercent
 
-    // P2P комиссия: 3%
-    const p2pFee = (saleAmount * 3) / 100
+    // Шаг 3: Фиксированная часть внутренней комиссии ($5)
+    const internalFeeFix = 5
+    const afterInternalFix = afterInternalPercent - internalFeeFix
 
-    // Чистая сумма
-    const total = saleAmount - exchangeFee - internalFee - p2pFee
+    // Шаг 4: Комиссия P2P (3% от суммы после всех предыдущих комиссий)
+    const p2pFee = (afterInternalFix * 3) / 100
+    const beforeRounding = afterInternalFix - p2pFee
+
+    // Округление: если >= 0.5 - вверх (в пользу клиента), если < 0.5 - вниз (в пользу обменника)
+    const fractional = beforeRounding - Math.floor(beforeRounding)
+    const total = fractional >= 0.5 ? Math.ceil(beforeRounding) : Math.floor(beforeRounding)
+
+    // Общая внутренняя комиссия для отображения
+    const internalFeeTotal = internalFeePercent + internalFeeFix
 
     setResult({
       saleAmount,
       exchangeFee,
-      internalFee,
+      exchangeFeeName: method.name,
+      exchangeFeePercent: method.fee,
+      internalFeePercent,
+      internalFeeFix,
+      internalFeeTotal,
       p2pFee,
+      beforeRounding,
       total: Math.max(0, total)
     })
   }
@@ -88,24 +104,30 @@ export default function Calculator() {
 
         {result && (
           <div className="calc-result">
-            <div className="result-item">
-              <span>
-                {selectedMethod.id === 'paypal' ? t('paypalFee') :
-                 selectedMethod.id === 'bank' ? t('bankFee') : t('stripeFee')} ({selectedMethod.fee}%)
-              </span>
-              <strong className="fee-amount">{formatCurrency(result.exchangeFee)}</strong>
+            <div className="result-header">
+              <span>Сумма продажи:</span>
+              <strong>{formatCurrency(result.saleAmount)}</strong>
             </div>
+
             <div className="result-item">
-              <span>{t('internalFee')} ($5 + 6%)</span>
-              <strong className="fee-amount">{formatCurrency(result.internalFee)}</strong>
+              <span>Комиссия {result.exchangeFeeName}: {result.exchangeFeePercent}%</span>
+              <strong className="fee-amount">-{formatCurrency(result.exchangeFee)}</strong>
             </div>
+
             <div className="result-item">
-              <span>{t('p2pFee')} (3%)</span>
-              <strong className="fee-amount">{formatCurrency(result.p2pFee)}</strong>
+              <span>Внутренняя комиссия: $5 + 7%</span>
+              <strong className="fee-amount">-{formatCurrency(result.internalFeeTotal)}</strong>
             </div>
+
+            <div className="result-item">
+              <span>Комиссия P2P: 3%</span>
+              <strong className="fee-amount">-{formatCurrency(result.p2pFee)}</strong>
+            </div>
+
             <div className="result-divider"></div>
+
             <div className="result-total">
-              <span>{t('youReceive')}</span>
+              <span>Чистая сумма (Итоговая):</span>
               <strong className="total-amount">{formatCurrency(result.total)}</strong>
             </div>
           </div>

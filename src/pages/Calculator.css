@@ -100,6 +100,27 @@
   border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.result-header span {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.result-header strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .result-item {
   display: flex;
   justify-content: space-between;
