@@ -91,14 +91,27 @@ export default function Transactions() {
         </div>
       </div>
 
-      {/* VIP Progress */}
-      <div className="vip-progress">
-        <div className="progress-header">
-          <span>{t('vipThreshold')} ({formatCurrency(vipThreshold)})</span>
-          <span>{Math.round(progress)}%</span>
+      {/* VIP Progress - Premium Design */}
+      <div className={`vip-progress ${progress >= 100 ? 'vip-unlocked' : ''}`}>
+        <div className="vip-crown-badge">
+          <span className="crown-emoji">👑</span>
+          <span className="crown-percent">{Math.round(progress)}%</span>
         </div>
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+        <div className="vip-content">
+          <div className="vip-title">
+            <span>{progress >= 100 ? 'VIP Status Unlocked!' : t('vipThreshold')}</span>
+            <strong>{formatCurrency(stats.totalSum)} / {formatCurrency(vipThreshold)}</strong>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }}>
+              <div className="progress-glow"></div>
+            </div>
+          </div>
+          {progress < 100 && (
+            <span className="vip-hint">
+              {formatCurrency(vipThreshold - stats.totalSum)} left to unlock VIP
+            </span>
+          )}
         </div>
       </div>
 
