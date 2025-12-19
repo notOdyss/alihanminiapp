@@ -8,7 +8,7 @@ import Calculator from './pages/Calculator'
 import Balance from './pages/Balance'
 import Statistics from './pages/Statistics'
 import More from './pages/More'
-import './styles/App.css'
+import './App.css'
 
 function App() {
   const [loading, setLoading] = useState(true)
