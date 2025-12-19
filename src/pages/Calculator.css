@@ -113,12 +113,16 @@
   font-size: 15px;
   color: var(--text-primary);
   font-weight: 700;
+  flex: 1;
 }
 
 .result-header strong {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+  min-width: 100px;
 }
 
 .result-item {
@@ -137,12 +141,16 @@
   font-size: 14px;
   color: var(--text-secondary);
   font-weight: 600;
+  flex: 1;
 }
 
 .result-item .fee-amount {
   font-size: 16px;
   font-weight: 700;
   color: var(--accent-red);
+  text-align: right;
+  white-space: nowrap;
+  min-width: 100px;
 }
 
 .result-divider {
@@ -163,6 +171,7 @@
   font-size: 18px;
   color: var(--text-primary);
   font-weight: 700;
+  flex: 1;
 }
 
 .total-amount {
@@ -170,6 +179,9 @@
   font-weight: 700;
   color: var(--accent-green);
   letter-spacing: -0.5px;
+  text-align: right;
+  white-space: nowrap;
+  min-width: 100px;
 }
 
 /* Responsive */
