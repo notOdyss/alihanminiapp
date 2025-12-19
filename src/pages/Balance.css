@@ -4,49 +4,28 @@
 
 .balance-total {
   margin: 0 20px 24px;
-  padding: 32px 24px;
-  background: var(--primary-gradient);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
+  padding: 28px 24px;
+  background: var(--bg-card);
+  border: 2px solid var(--accent-purple);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.balance-total::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  animation: pulse 3s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 0.8; }
 }
 
 .balance-total span {
   display: block;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  color: var(--text-secondary);
   font-weight: 600;
   margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  position: relative;
-  z-index: 1;
+  letter-spacing: 0.5px;
 }
 
 .balance-total h1 {
-  font-size: 48px;
-  font-weight: 800;
-  color: white;
-  position: relative;
-  z-index: 1;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .balance-cards {
@@ -69,29 +48,13 @@
   overflow: hidden;
 }
 
-.balance-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--primary-gradient);
-  transform: scaleX(0);
-  transition: transform var(--transition-base);
-}
-
 .balance-card:active {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.balance-card:active::before {
-  transform: scaleX(1);
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .card-icon {
-  font-size: 32px;
+  color: var(--accent-purple);
 }
 
 .balance-card span {
@@ -103,10 +66,7 @@
 .balance-card strong {
   font-size: 20px;
   font-weight: 700;
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .withdrawal-card {
@@ -126,7 +86,7 @@
 }
 
 .withdrawal-header .card-icon {
-  font-size: 28px;
+  color: var(--accent-green);
 }
 
 .withdrawal-header span {
@@ -137,19 +97,16 @@
 
 .withdrawal-amount {
   font-size: 32px;
-  font-weight: 800;
-  background: var(--success-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 700;
+  color: var(--text-primary);
   display: block;
 }
 
 .account-info {
   margin: 0 20px;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
   text-align: center;
 }
 

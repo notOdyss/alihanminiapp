@@ -21,30 +21,11 @@
   overflow: hidden;
 }
 
-.stats-tab-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--primary-gradient);
-  opacity: 0;
-  transition: opacity var(--transition-base);
-}
-
-.stats-tab-btn span {
-  position: relative;
-  z-index: 1;
-}
-
 .stats-tab-btn.active {
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.stats-tab-btn.active::before {
-  opacity: 1;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--accent-purple);
 }
 
 .stats-tab-btn:active {
@@ -68,53 +49,16 @@
   overflow: hidden;
 }
 
-.stat-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--primary-gradient);
-  transform: scaleY(0);
-  transition: transform var(--transition-base);
-}
-
 .stat-box:active {
-  transform: translateX(4px);
+  transform: scale(0.98);
   box-shadow: var(--shadow-lg);
 }
 
-.stat-box:active::before {
-  transform: scaleY(1);
-}
-
-.stat-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-  display: inline-block;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-.stat-box:nth-child(1) .stat-icon { animation-delay: 0s; }
-.stat-box:nth-child(2) .stat-icon { animation-delay: 0.2s; }
-.stat-box:nth-child(3) .stat-icon { animation-delay: 0.4s; }
-.stat-box:nth-child(4) .stat-icon { animation-delay: 0.6s; }
-.stat-box:nth-child(5) .stat-icon { animation-delay: 0.8s; }
-
 .stat-number {
   display: block;
-  font-size: 36px;
-  font-weight: 800;
-  background: var(--primary-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
@@ -143,12 +87,8 @@
     padding: 20px;
   }
 
-  .stat-icon {
-    font-size: 32px;
-  }
-
   .stat-number {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .stat-title {

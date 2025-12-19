@@ -130,26 +130,20 @@ a {
 }
 
 .empty-icon {
-  font-size: 72px;
-  opacity: 0.3;
+  opacity: 0.2;
   margin-bottom: 8px;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  color: var(--text-hint);
 }
 
 .empty-state p {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
 .empty-state span {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-hint);
 }
 
@@ -158,20 +152,17 @@ a {
 }
 
 .section-header h2 {
-  font-size: 32px;
-  font-weight: 800;
+  font-size: 28px;
+  font-weight: 700;
   margin-bottom: 6px;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   letter-spacing: -0.5px;
 }
 
 .section-header p {
   font-size: 14px;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Scrollbar Styling */

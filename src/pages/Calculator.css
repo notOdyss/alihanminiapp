@@ -36,35 +36,15 @@
   overflow: hidden;
 }
 
-.method-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--gradient-primary);
-  opacity: 0;
-  transition: opacity var(--transition-base);
-}
-
-.method-btn span {
-  position: relative;
-  z-index: 1;
-}
-
 .method-btn:hover:not(.active) {
   background: var(--bg-hover);
-  transform: translateY(-2px);
 }
 
 .method-btn.active {
-  color: white;
-  box-shadow: var(--shadow-glow);
-}
-
-.method-btn.active::before {
-  opacity: 1;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--accent-purple);
 }
 
 .method-btn:active {
@@ -103,9 +83,8 @@
 
 .calc-input:focus {
   border-color: var(--accent-purple);
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   background: var(--bg-secondary);
-  transform: translateY(-2px);
 }
 
 .calc-input::placeholder {
@@ -116,10 +95,9 @@
 .calc-result {
   margin-top: 28px;
   padding: 24px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(102, 126, 234, 0.1);
-  animation: slideUp 0.3s ease-out;
 }
 
 .result-item {
@@ -142,23 +120,15 @@
 
 .result-item .fee-amount {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent-red);
-  transition: all var(--transition-base);
-}
-
-.result-item:hover .fee-amount {
-  color: #ff6b8a;
-  transform: scale(1.05);
 }
 
 .result-divider {
-  height: 3px;
-  background: var(--gradient-primary);
+  height: 2px;
+  background: rgba(102, 126, 234, 0.2);
   margin: 20px 0;
   border-radius: var(--radius-full);
-  animation: shimmer 2s infinite;
-  background-size: 200% 100%;
 }
 
 .result-total {
@@ -176,12 +146,8 @@
 
 .total-amount {
   font-size: 28px;
-  font-weight: 900;
-  background: var(--gradient-success);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: glow 2s ease-in-out infinite;
+  font-weight: 700;
+  color: var(--accent-green);
   letter-spacing: -0.5px;
 }
 

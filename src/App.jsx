@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { TelegramProvider } from './context/TelegramContext'
 import { DataProvider } from './context/DataContext'
-import { LanguageProvider } from './context/LanguageContext'
+import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import Calculator from './pages/Calculator'
@@ -10,6 +10,16 @@ import Balance from './pages/Balance'
 import Statistics from './pages/Statistics'
 import More from './pages/More'
 import './App.css'
+
+function LoadingScreen() {
+  const { t } = useLanguage()
+  return (
+    <div className="loading-screen">
+      <div className="spinner"></div>
+      <p>{t('loading')}</p>
+    </div>
+  )
+}
 
 function App() {
   const [loading, setLoading] = useState(true)
@@ -35,10 +45,9 @@ function App() {
 
   if (loading) {
     return (
-      <div className="loading-screen">
-        <div className="spinner"></div>
-        <p>Загрузка...</p>
-      </div>
+      <LanguageProvider>
+        <LoadingScreen />
+      </LanguageProvider>
     )
   }
 
