@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import { TelegramProvider } from './context/TelegramContext'
 import { DataProvider } from './context/DataContext'
+import { LanguageProvider } from './context/LanguageContext'
 import Layout from './components/Layout'
 import Transactions from './pages/Transactions'
 import Calculator from './pages/Calculator'
@@ -43,20 +44,22 @@ function App() {
 
   return (
     <TelegramProvider>
-      <DataProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/transactions" replace />} />
-              <Route path="transactions" element={<Transactions />} />
-              <Route path="calculator" element={<Calculator />} />
-              <Route path="balance" element={<Balance />} />
-              <Route path="statistics" element={<Statistics />} />
-              <Route path="more" element={<More />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </DataProvider>
+      <LanguageProvider>
+        <DataProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Navigate to="/transactions" replace />} />
+                <Route path="transactions" element={<Transactions />} />
+                <Route path="calculator" element={<Calculator />} />
+                <Route path="balance" element={<Balance />} />
+                <Route path="statistics" element={<Statistics />} />
+                <Route path="more" element={<More />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </DataProvider>
+      </LanguageProvider>
     </TelegramProvider>
   )
 }

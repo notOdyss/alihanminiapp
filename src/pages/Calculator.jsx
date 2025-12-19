@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLanguage } from '../context/LanguageContext'
 import './Calculator.css'
 
 const methods = [
@@ -8,29 +9,43 @@ const methods = [
 ]
 
 export default function Calculator() {
+  const { t } = useLanguage()
   const [selectedMethod, setSelectedMethod] = useState(methods[0])
   const [amount, setAmount] = useState('')
   const [result, setResult] = useState(null)
 
-  const calculate = () => {
-    const amt = parseFloat(amount) || 0
-    if (amt <= 0) {
+  const calculate = (amt, method) => {
+    const saleAmount = parseFloat(amt) || 0
+    if (saleAmount <= 0) {
       setResult(null)
       return
     }
 
-    const exchangeFee = (amt * selectedMethod.fee) / 100
-    const internalFee = (amt * 6) / 100 + 5
-    const p2pFee = (amt * 3) / 100
-    const total = amt - exchangeFee - internalFee - p2pFee
+    // Комиссия метода оплаты (PayPal/Bank/Stripe)
+    const exchangeFee = (saleAmount * method.fee) / 100
+
+    // Внутренняя комиссия: $5 + 6%
+    const internalFee = 5 + (saleAmount * 6) / 100
+
+    // P2P комиссия: 3%
+    const p2pFee = (saleAmount * 3) / 100
+
+    // Чистая сумма
+    const total = saleAmount - exchangeFee - internalFee - p2pFee
 
     setResult({
+      saleAmount,
       exchangeFee,
       internalFee,
       p2pFee,
       total: Math.max(0, total)
     })
   }
+
+  // Auto-calculate when amount or method changes
+  useEffect(() => {
+    calculate(amount, selectedMethod)
+  }, [amount, selectedMethod])
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
@@ -42,8 +57,8 @@ export default function Calculator() {
   return (
     <div className="calculator-page">
       <div className="section-header">
-        <h2>🧮 Калькулятор комиссий</h2>
-        <p>Рассчитайте комиссии в обоих направлениях</p>
+        <h2>🧮 {t('calculatorTitle')}</h2>
+        <p>{t('calculatorSubtitle')}</p>
       </div>
 
       <div className="calculator-card">
@@ -52,10 +67,7 @@ export default function Calculator() {
             <button
               key={method.id}
               className={`method-btn ${selectedMethod.id === method.id ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedMethod(method)
-                setResult(null)
-              }}
+              onClick={() => setSelectedMethod(method)}
             >
               {method.name} ({method.fee}%)
             </button>
@@ -63,41 +75,37 @@ export default function Calculator() {
         </div>
 
         <div className="input-group">
-          <label>Введите сумму продажи ($)</label>
+          <label>{t('saleAmount')}</label>
           <input
             type="number"
             className="calc-input"
             placeholder="0.00"
             step="0.01"
             value={amount}
-            onChange={(e) => {
-              setAmount(e.target.value)
-              setResult(null)
-            }}
+            onChange={(e) => setAmount(e.target.value)}
           />
         </div>
-
-        <button className="calc-btn" onClick={calculate}>
-          Рассчитать чистую сумму
-        </button>
 
         {result && (
           <div className="calc-result">
             <div className="result-item">
-              <span>Комиссия обменника ({selectedMethod.fee}%)</span>
-              <strong>{formatCurrency(result.exchangeFee)}</strong>
+              <span>
+                {selectedMethod.id === 'paypal' ? t('paypalFee') :
+                 selectedMethod.id === 'bank' ? t('bankFee') : t('stripeFee')} ({selectedMethod.fee}%)
+              </span>
+              <strong className="fee-amount">{formatCurrency(result.exchangeFee)}</strong>
             </div>
             <div className="result-item">
-              <span>Внутренняя комиссия (6% + $5)</span>
-              <strong>{formatCurrency(result.internalFee)}</strong>
+              <span>{t('internalFee')} ($5 + 6%)</span>
+              <strong className="fee-amount">{formatCurrency(result.internalFee)}</strong>
             </div>
             <div className="result-item">
-              <span>P2P комиссия (3%)</span>
-              <strong>{formatCurrency(result.p2pFee)}</strong>
+              <span>{t('p2pFee')} (3%)</span>
+              <strong className="fee-amount">{formatCurrency(result.p2pFee)}</strong>
             </div>
             <div className="result-divider"></div>
             <div className="result-total">
-              <span>Вы получите</span>
+              <span>{t('youReceive')}</span>
               <strong className="total-amount">{formatCurrency(result.total)}</strong>
             </div>
           </div>
