@@ -38,6 +38,10 @@ export const DataProvider = ({ children }) => {
   const fetchData = async () => {
     addLog(`Fetching data... User: ${user?.username || 'unknown'}`)
 
+    // Start 5-second minimum timer BEFORE any API calls
+    const loadStartTime = Date.now()
+    const MIN_LOAD_TIME = 5000
+
     const headers = {
       'ngrok-skip-browser-warning': 'true',
       'Content-Type': 'application/json'
@@ -49,14 +53,10 @@ export const DataProvider = ({ children }) => {
 
     try {
       // Parallel Fetching
-      // Force 5-second minimum load time as requested
-      const minLoadTime = new Promise(resolve => setTimeout(resolve, 5000))
-
       const [balanceRes, statsRes, txsRes] = await Promise.all([
         fetch(`${API_URL}/balance`, { headers }),
         fetch(`${API_URL}/statistics`, { headers }),
         fetch(`${API_URL}/transactions?limit=50`, { headers }),
-        minLoadTime
       ])
 
       // 1. Process Balance
@@ -80,6 +80,14 @@ export const DataProvider = ({ children }) => {
       addLog(`ERROR: ${error.message}`)
       console.error(error)
     } finally {
+      // Ensure minimum 5-second load time even if API fails
+      const elapsed = Date.now() - loadStartTime
+      const remainingTime = MIN_LOAD_TIME - elapsed
+
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime))
+      }
+
       setLoading(false)
     }
   }

@@ -52,6 +52,32 @@ function DebugOverlay() {
   )
 }
 
+// Wrapper that blocks the app with LoadingScreen until data is verified
+function AppContent() {
+  const { loading } = useData()
+
+  // Block access to app until data is loaded (5+ seconds minimum)
+  if (loading) {
+    return <LoadingScreen />
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="/transactions" replace />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="calculator" element={<Calculator />} />
+          <Route path="balance" element={<Balance />} />
+          <Route path="statistics" element={<Statistics />} />
+          <Route path="more" element={<More />} />
+        </Route>
+      </Routes>
+      <DebugOverlay />
+    </BrowserRouter>
+  )
+}
+
 function App() {
   useEffect(() => {
     // Initialize Telegram WebApp
@@ -75,19 +101,7 @@ function App() {
       <LanguageProvider>
         <ToastProvider>
           <DataProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/transactions" replace />} />
-                  <Route path="transactions" element={<Transactions />} />
-                  <Route path="calculator" element={<Calculator />} />
-                  <Route path="balance" element={<Balance />} />
-                  <Route path="statistics" element={<Statistics />} />
-                  <Route path="more" element={<More />} />
-                </Route>
-              </Routes>
-              <DebugOverlay />
-            </BrowserRouter>
+            <AppContent />
           </DataProvider>
         </ToastProvider>
       </LanguageProvider>
