@@ -1,7 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './LoadingScreen.css';
 
 const LoadingScreen = () => {
+    const [progress, setProgress] = useState(0);
+    const [currentStep, setCurrentStep] = useState(0);
+
+    const steps = [
+        { text: 'Проверка безопасности...', icon: '🔐' },
+        { text: 'Синхронизация данных...', icon: '🔄' },
+        { text: 'Загрузка транзакций...', icon: '💳' },
+        { text: 'Подготовка интерфейса...', icon: '✨' },
+    ];
+
+    useEffect(() => {
+        // Progress animation - complete in 5 seconds
+        const progressInterval = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 100) return 100;
+                // Ease out - faster at start, slower near end
+                const increment = Math.max(0.5, (100 - prev) / 50);
+                return Math.min(100, prev + increment);
+            });
+        }, 50);
+
+        // Step animation - change step every ~1.2 seconds
+        const stepInterval = setInterval(() => {
+            setCurrentStep(prev => (prev < steps.length - 1 ? prev + 1 : prev));
+        }, 1200);
+
+        return () => {
+            clearInterval(progressInterval);
+            clearInterval(stepInterval);
+        };
+    }, []);
+
     return (
         <div className="loading-screen">
             {/* Background orbs */}
@@ -42,17 +74,35 @@ const LoadingScreen = () => {
                     <span className="loading-subtitle">by Ali</span>
                 </div>
 
-                {/* Loading Spinner */}
-                <div className="loading-spinner">
-                    <div className="spinner-circle"></div>
-                    <div className="spinner-circle"></div>
-                    <div className="spinner-circle"></div>
+                {/* Progress Bar */}
+                <div className="loading-progress-container">
+                    <div className="loading-progress-bar">
+                        <div
+                            className="loading-progress-fill"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    <span className="loading-progress-text">{Math.round(progress)}%</span>
                 </div>
 
-                {/* Loading Text */}
-                <p className="loading-text">
-                    Загрузка<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span>
-                </p>
+                {/* Dynamic Steps */}
+                <div className="loading-steps">
+                    {steps.map((step, index) => (
+                        <div
+                            key={index}
+                            className={`loading-step ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+                        >
+                            <span className="step-icon">{step.icon}</span>
+                            <span className="step-text">{step.text}</span>
+                            {index === currentStep && (
+                                <span className="step-loader"></span>
+                            )}
+                            {index < currentStep && (
+                                <span className="step-check">✓</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
