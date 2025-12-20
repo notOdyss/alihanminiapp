@@ -1,0 +1,26 @@
+INFO:     Started server process [92042]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+Starting without SSL (HTTP only)
+DEBUG: Skipping hash validation for: query_id=AAHucwMpAAA...
+DEBUG: Checking access for user=@notodyss id=688092142
+DEBUG: User 688092142 is ADMIN. Access GRANTED.
+INFO:     5.251.34.113:0 - "GET /api/balance HTTP/1.1" 401 Unauthorized
+INFO:     5.251.34.113:0 - "GET /api/balance HTTP/1.1" 200 OK
+DEBUG: Skipping hash validation for: query_id=AAHucwMpAAA...
+DEBUG: Checking access for user=@notodyss id=688092142
+DEBUG: User 688092142 is ADMIN. Access GRANTED.
+INFO:     5.251.34.113:0 - "GET /api/statistics HTTP/1.1" 200 OK
+DEBUG: Skipping hash validation for: query_id=AAHucwMpAAA...
+DEBUG: Checking access for user=@notodyss id=688092142
+DEBUG: User 688092142 is ADMIN. Access GRANTED.
+DEBUG: Fetching transactions for @notodyss
+INFO:     5.251.34.113:0 - "GET /api/transactions?limit=50 HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [92042]
+Sentry is attempting to send 1 pending events
+Waiting up to 2 seconds
+Press Ctrl-C to quit

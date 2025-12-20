@@ -1,0 +1,6 @@
+INFO:     Started server process [48329]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+Starting without SSL (HTTP only)
+INFO:     5.251.34.113:0 - "GET /health HTTP/1.1" 404 Not Found
