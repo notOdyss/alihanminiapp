@@ -2,7 +2,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 
 # URL вашего Mini App (замените на свой)
-WEBAPP_URL = "https://alihanminiapp-fpet.vercel.app/"
+WEBAPP_URL = "https://alihanminiapp.vercel.app/"
 
 
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:
