@@ -1,8 +1,5 @@
-2025-12-21 03:54:32,758 - __main__ - INFO - Database initialized
-2025-12-21 03:54:32,758 - __main__ - INFO - Starting Exchange Bot...
-2025-12-21 03:54:32,770 - __main__ - INFO - Bot is running...
-2025-12-21 03:54:32,770 - aiogram.dispatcher - INFO - Start polling
-2025-12-21 03:54:33,120 - aiogram.dispatcher - INFO - Run polling for bot @exchangeali_bot id=8300934474 - 'Обменник by Ali Bot 🛍'
-2025-12-21 03:55:39,118 - aiogram.dispatcher - WARNING - Received SIGTERM signal
-2025-12-21 03:55:39,119 - aiogram.dispatcher - INFO - Polling stopped for bot @exchangeali_bot id=8300934474 - 'Обменник by Ali Bot 🛍'
-2025-12-21 03:55:39,120 - aiogram.dispatcher - INFO - Polling stopped
+2025-12-21 05:19:54,817 - __main__ - INFO - Database initialized
+2025-12-21 05:19:54,817 - __main__ - INFO - Starting Exchange Bot...
+2025-12-21 05:19:54,831 - __main__ - INFO - Bot is running...
+2025-12-21 05:19:54,831 - aiogram.dispatcher - INFO - Start polling
+2025-12-21 05:19:55,158 - aiogram.dispatcher - INFO - Run polling for bot @exchangeali_bot id=8300934474 - 'Обменник by Ali Bot 🛍'

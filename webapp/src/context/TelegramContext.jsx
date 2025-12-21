@@ -9,6 +9,7 @@ export const TelegramProvider = ({ children }) => {
   useEffect(() => {
     const telegram = window.Telegram?.WebApp
     if (telegram) {
+      telegram.ready()
       setTg(telegram)
       setUser(telegram.initDataUnsafe?.user || null)
     }

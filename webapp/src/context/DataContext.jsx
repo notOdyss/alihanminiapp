@@ -38,19 +38,19 @@ export const DataProvider = ({ children }) => {
     // Only fetch once when tg is ready
     if (hasFetched.current) return
 
-    // If tg exists and has initData, or if we've waited long enough, fetch
+    // 1. Ideal case: We have initData
     if (tg?.initData) {
       addLog(`Telegram ready, fetching data...`)
       hasFetched.current = true
       fetchData(tg.initData)
-    } else if (tg === null) {
-      // Still waiting for tg to initialize
-      addLog(`Waiting for Telegram...`)
-    } else if (tg && !tg.initData) {
-      // tg exists but no initData (running outside Telegram)
-      addLog(`No initData, attempting fetch anyway...`)
-      hasFetched.current = true
-      fetchData(null)
+    }
+    // 2. Telegram SDK loaded but no initData yet - Just wait, don't trigger fetch
+    else if (tg && !tg.initData) {
+      addLog(`Telegram SDK loaded, waiting for initData...`)
+    }
+    // 3. tg is null - Still loading SDK script - Wait
+    else {
+      addLog(`Waiting for Telegram SDK...`)
     }
   }, [tg, user])
 
@@ -58,11 +58,19 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!hasFetched.current) {
-        addLog(`Timeout waiting for Telegram, fetching anyway...`)
-        hasFetched.current = true
-        fetchData(tg?.initData || null)
+        if (tg?.initData) {
+          // It appeared just now?
+          hasFetched.current = true
+          fetchData(tg.initData)
+        } else {
+          // Timeout reached and still no initData. 
+          // Likely running in browser or Telegram failed to inject data.
+          addLog(`Timeout: No initData found.`)
+          // We do NOT fetch here to avoid 401. We just stop loading.
+          setLoading(false)
+        }
       }
-    }, 2000) // Wait max 2 seconds for Telegram
+    }, 3000) // Wait 3 seconds
 
     return () => clearTimeout(timeout)
   }, [tg])
@@ -72,7 +80,7 @@ export const DataProvider = ({ children }) => {
 
     // Start 5-second minimum timer BEFORE any API calls
     const loadStartTime = Date.now()
-    const MIN_LOAD_TIME = 5000
+    const MIN_LOAD_TIME = 1000
 
     // Build headers once and reuse - avoid stale closure issues
     const headers = {

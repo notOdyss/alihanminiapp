@@ -193,33 +193,19 @@ class GoogleSheetsSync:
             spreadsheet = self.client.open_by_key(self.transactions_id)
             worksheet = spreadsheet.get_worksheet(0)
             
-            # 1. Determine start row
-            last_db_row = await self._get_last_synced_row()
-            total_rows = worksheet.row_count
-            
-            # Handle Dirty DB State (last_db_row > total_rows)
-            # This happens if DB has garbage or rows were deleted in Sheet
-            # Safe Fallback: Sync last 500 rows
-            if last_db_row > total_rows:
-                print(f"   ⚠️  DB row {last_db_row} > Sheet {total_rows}. Resyncing last 500.")
-                start_row = max(2, total_rows - 500)
-            else:
-                # Normal incremental sync with overlap
-                start_row = max(2, last_db_row - 200)
+            # Normal full sync for stability as requested
+            start_row = 2
+            print(f"   🚀 Starting full sync from row: {start_row}")
 
-            print(f"   📍 Last synced row: {last_db_row} (Sheet Max: {total_rows})")
-            print(f"   🚀 Starting sync from row: {start_row}")
-
-            # 2. Fetch range
-            range_name = f'A{start_row}:V'
-            rows = worksheet.get_values(range_name)
+            # 2. Fetch all
+            rows = worksheet.get_all_values()[1:] # Skip headers
             
             if not rows:
-                print("   ⚠️  No data found in range")
+                print("   ⚠️  No data found")
                 await self._record_sync_complete(sync_id, 0)
                 return
 
-            print(f"   📥 Fetched {len(rows)} rows from Sheets")
+            print(f"   📥 Fetched {len(rows)} transactions from Sheets")
 
             batch_data = []
             batch_size = 500

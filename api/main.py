@@ -106,13 +106,39 @@ def get_username_from_telegram_user(user_data: dict) -> Optional[str]:
     
     return clean_username
 
-# RELAXED validation for debugging/production fix
 def validate_telegram_data(init_data: str, bot_token: str) -> bool:
-    # ⚠️ TEMPORARY BYPASS to fix "nothing works" issue
-    # Real validation often fails if tokens mismatch or order differs
-    # For now, trust the data if it parses correctly.
-    print(f"DEBUG: Skipping hash validation for: {init_data[:20]}...")
-    return True
+    """
+    Валидация данных от Telegram.
+    Проверяет hash на основе BOT_TOKEN.
+    """
+    try:
+        if not bot_token:
+            return False
+
+        vals = urllib.parse.parse_qs(init_data)
+        if 'hash' not in vals:
+            return False
+
+        data_check_string = "\n".join([
+            f"{k}={v[0]}" for k, v in sorted(vals.items()) if k != 'hash'
+        ])
+
+        secret_key = hmac.new(
+            b"WebAppData",
+            bot_token.encode(),
+            hashlib.sha256
+        ).digest()
+
+        h = hmac.new(
+            secret_key,
+            data_check_string.encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        return h == vals['hash'][0]
+    except Exception as e:
+        print(f"Validation error: {e}")
+        return False
 
 def parse_telegram_init_data(init_data: str) -> dict:
     """Парсинг Telegram initData для получения user ID с валидацией"""
@@ -125,7 +151,8 @@ def parse_telegram_init_data(init_data: str) -> dict:
     else:
         is_valid = validate_telegram_data(init_data, BOT_TOKEN)
         if not is_valid:
-            raise HTTPException(status_code=401, detail="Invalid Telegram data hash")
+            print(f"Validation failed for init_data: {init_data[:50]}...")
+            raise HTTPException(status_code=401, detail="Invalid Telegram data hash. Authentication failed.")
             
     # 3. Парсим данные
     try:
@@ -143,62 +170,39 @@ def parse_telegram_init_data(init_data: str) -> dict:
         print(f"Error parsing init data: {e}")
         return {}
 
-# Middleware with DEBUG logging
 async def check_client_access(username: str, db: AsyncSession, user_id: int) -> bool:
-    print(f"DEBUG: Checking access for user={username} id={user_id}")
-    
-    # Admins have access
+    """Check if client has access based on threshold or admin status"""
+    # Access threshold logic
+    # Admin check
     admin_ids = eval(os.getenv('ADMIN_IDS', '[]'))
     if user_id in admin_ids:
-        print(f"DEBUG: User {user_id} is ADMIN. Access GRANTED.")
         return True
 
-    # Normalize lookup - compare stripped versions
-    # Database stores '@username', input is '@username'
-    # strict comparison might fail on invisible chars
-    
+    # User threshold check
     query = text("""
-        SELECT can_view_data, total_earnings
+        SELECT can_view_data
         FROM client_thresholds
         WHERE LOWER(client_username) = LOWER(:username)
-           OR LOWER(client_username) = LOWER(:username_no_at)
     """)
     
-    username_no_at = username.lstrip('@')
-    
-    result = await db.execute(query, {
-        "username": username,
-        "username_no_at": username_no_at
-    })
+    result = await db.execute(query, {"username": username})
     row = result.fetchone()
 
     if row and row[0]:
-        print(f"DEBUG: Found explicit threshold record. Access GRANTED.")
         return True
 
-    # Transaction volume check
+    # Volume check
     earnings_query = text("""
         SELECT COALESCE(SUM(withdrawal_amount), 0)
         FROM sheet_transactions
-        WHERE (LOWER(client_username) = LOWER(:username) 
-           OR LOWER(client_username) = LOWER(:username_no_at))
+        WHERE LOWER(client_username) = LOWER(:username)
           AND withdrawal_received = TRUE
     """)
 
-    earnings_result = await db.execute(earnings_query, {
-        "username": username,
-        "username_no_at": username_no_at
-    })
+    earnings_result = await db.execute(earnings_query, {"username": username})
     total_earnings = float(earnings_result.scalar() or 0.0)
     
-    print(f"DEBUG: Calculated total earnings: ${total_earnings}")
-
-    print(f"DEBUG: Calculated total earnings: ${total_earnings}")
-
-    # ⚠️ ALLOW EVERYONE ACCESS (User request: "make sure it works for everyone")
-    # Previously threshold was 500.0
-    threshold = 0.0 
-    return float(total_earnings) >= threshold
+    return total_earnings >= 0.0 # Allow for now but track volume
 
 
 # API Endpoints
@@ -257,7 +261,7 @@ async def get_statistics(
 ):
     """Получить статистику клиента"""
     if not x_telegram_init_data:
-        raise HTTPException(status_code=401, detail="Telegram init data required")
+        raise HTTPException(status_code=401, detail="Missing X-Telegram-Init-Data header. Please open in Telegram.")
 
     user_data = parse_telegram_init_data(x_telegram_init_data)
     username = get_username_from_telegram_user(user_data)
