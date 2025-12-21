@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useTelegram } from './TelegramContext'
 
 const DataContext = createContext(null)
@@ -25,34 +25,70 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [debugLogs, setDebugLogs] = useState([])
 
-  const addLog = (msg) => {
+  // Ref to track if we've already fetched to avoid double-fetch
+  const hasFetched = useRef(false)
+
+  const addLog = useCallback((msg) => {
     console.log(msg)
     setDebugLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 10))
-  }
+  }, [])
 
+  // Wait for Telegram to be ready before fetching
   useEffect(() => {
-    // Force fetch on mount even if no user (for debug)
-    fetchData()
-  }, [user])
+    // Only fetch once when tg is ready
+    if (hasFetched.current) return
 
-  const fetchData = async () => {
+    // If tg exists and has initData, or if we've waited long enough, fetch
+    if (tg?.initData) {
+      addLog(`Telegram ready, fetching data...`)
+      hasFetched.current = true
+      fetchData(tg.initData)
+    } else if (tg === null) {
+      // Still waiting for tg to initialize
+      addLog(`Waiting for Telegram...`)
+    } else if (tg && !tg.initData) {
+      // tg exists but no initData (running outside Telegram)
+      addLog(`No initData, attempting fetch anyway...`)
+      hasFetched.current = true
+      fetchData(null)
+    }
+  }, [tg, user])
+
+  // Timeout to ensure we don't wait forever
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!hasFetched.current) {
+        addLog(`Timeout waiting for Telegram, fetching anyway...`)
+        hasFetched.current = true
+        fetchData(tg?.initData || null)
+      }
+    }, 2000) // Wait max 2 seconds for Telegram
+
+    return () => clearTimeout(timeout)
+  }, [tg])
+
+  const fetchData = async (initData) => {
     addLog(`Fetching data... User: ${user?.username || 'unknown'}`)
 
     // Start 5-second minimum timer BEFORE any API calls
     const loadStartTime = Date.now()
     const MIN_LOAD_TIME = 5000
 
+    // Build headers once and reuse - avoid stale closure issues
     const headers = {
       'ngrok-skip-browser-warning': 'true',
       'Content-Type': 'application/json'
     }
 
-    if (tg?.initData) {
-      headers['X-Telegram-Init-Data'] = tg.initData
+    if (initData) {
+      headers['X-Telegram-Init-Data'] = initData
+      addLog(`Using initData: ${initData.substring(0, 30)}...`)
+    } else {
+      addLog(`WARNING: No initData available!`)
     }
 
     try {
-      // Parallel Fetching
+      // Parallel Fetching - headers object is passed by reference to all
       const [balanceRes, statsRes, txsRes] = await Promise.all([
         fetch(`${API_URL}/balance`, { headers }),
         fetch(`${API_URL}/statistics`, { headers }),
@@ -98,7 +134,7 @@ export const DataProvider = ({ children }) => {
     stats,
     loading,
     debugLogs,
-    refreshData: fetchData,
+    refreshData: () => fetchData(tg?.initData || null),
     lookupBuyer: async (email) => {
       if (!tg?.initData) return null
       try {
