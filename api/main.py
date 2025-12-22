@@ -551,12 +551,13 @@ async def check_premium_access(username: str, db: AsyncSession, user_id: int) ->
     if user_id in admin_ids:
         return True
 
-    # Calculate volume for last 30 days
+    # Calculate volume (Lifetime)
     query = text("""
         SELECT COALESCE(SUM(amount_gross), 0)
         FROM sheet_transactions
         WHERE client_username = :username
-          AND transaction_date >= CURRENT_DATE - INTERVAL '30 days'
+          AND withdrawal_received = TRUE
+          -- Removed 30 day limit filter
     """)
 
     result = await db.execute(query, {"username": username})
@@ -699,6 +700,11 @@ async def check_access_status_v2(
     # NEW: Check Premium Access
     can_lookup_buyer = await check_premium_access(username, db, user_id)
 
+    # Fetch db_user for referral_code
+    user_repo = UserRepository(db)
+    db_user = await user_repo.get_by_id(user_id)
+    referral_code = db_user.referral_code if db_user else None
+
     return {
         "has_access": can_view_data,
         "total_earnings": total_earnings,
@@ -707,7 +713,7 @@ async def check_access_status_v2(
         "progress_percentage": min(100, (total_earnings / threshold_amount * 100)) if threshold_amount > 0 else 100,
         "is_admin": is_admin,
         "can_lookup_buyer": can_lookup_buyer,  # New field
-        "referral_code": db_user.referral_code,
+        "referral_code": referral_code,
         "is_referral_custom": total_earnings > 300 # Helper for frontend logic
     }
 

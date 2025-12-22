@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.keyboards.main import get_main_menu_keyboard
 from bot.services.logger import telegram_logger
 from bot.database.models import User
+from bot.database.repositories import UserRepository
 
 router = Router(name="start")
 

@@ -2,48 +2,62 @@ import React, { useState, useEffect } from 'react';
 import './Referral.css';
 import { useTelegram } from '../hooks/useTelegram';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://floy-effluvial-chaim.ngrok-free.dev/api';
+
 const Referral = () => {
     const { user, tg } = useTelegram();
     const [referralCode, setReferralCode] = useState('');
     const [customCode, setCustomCode] = useState('');
-    const [stats, setStats] = useState({ totalTurnover: 0, referralCount: 0 }); // Placeholder for counts if API provided them
+    const [canCustomize, setCanCustomize] = useState(false);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
 
-    // Fetch user data (logic to be added to DataContext or fetched directly)
-    // For now, we reuse the /api/access-status or similar to get turnover, but code needs to be fetched.
-    // We might need to update DataContext to return referral_code. 
-    // For MVP, let's assume we can get it or we fetch it from a new endpoint.
-    // Actually, let's update DataContext to include referral info if possible, or fetch separate.
-
-    // Let's create a specialized fetch here or rely on props. 
-    // Since we didn't add GET /api/referral, we might need to. 
-    // Wait, let's add GET /api/user/profile to get this info or attach to access-status.
-
-    // Pivot: I will add `referral_code` to the `/api/access-status` response in backend first.
-
     useEffect(() => {
-        // Placeholder logic until backend is updated to return code
-        // Assuming DataContext could provide this, but strict mode now.
-        // I will write the frontend assuming the data exists, then go back update backend if missed.
-        // Actually, I missed adding `referral_code` to the response in api/main.py. I should fix that.
-        setLoading(false);
-    }, []);
+        // Fetch referral code from access-status
+        const fetchReferralInfo = async () => {
+            try {
+                const response = await fetch(`${API_URL}/access-status`, {
+                    headers: {
+                        'X-Telegram-Init-Data': tg?.initData || ''
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setReferralCode(data.referral_code || 'Не установлен');
+                    setCanCustomize(data.is_referral_custom || false);
+                }
+            } catch (e) {
+                console.error('Failed to fetch referral info:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (tg?.initData) {
+            fetchReferralInfo();
+        } else {
+            setLoading(false);
+        }
+    }, [tg?.initData]);
 
     const handleCopyLink = () => {
-        const link = `https://t.me/AlihanBot?start=${referralCode || 'LOADING'}`;
+        const link = `https://t.me/exchangeali_bot?start=${referralCode || 'LOADING'}`;
         navigator.clipboard.writeText(link);
-        tg.showPopup({ title: 'Ссылка скопирована', message: link, buttons: [{ type: 'ok' }] });
+        if (tg?.showPopup) {
+            tg.showPopup({ title: 'Ссылка скопирована', message: link, buttons: [{ type: 'ok' }] });
+        }
     };
 
     const handleUpdateCode = async () => {
         if (!customCode) return;
+        setMessage('');
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/referral_code`, {
+            const response = await fetch(`${API_URL}/user/referral_code`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Telegram-Init-Data': tg.initData
+                    'X-Telegram-Init-Data': tg?.initData || ''
                 },
                 body: JSON.stringify({ new_code: customCode })
             });
