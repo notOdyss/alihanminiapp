@@ -2,195 +2,269 @@ from pathlib import Path
 import logging
 
 from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.keyboards.transactions import (
     get_payment_methods_keyboard,
-    get_payment_detail_keyboard,
-    get_stripe_methods_keyboard,
-    get_stripe_detail_keyboard,
+    get_stripe_methods_keyboard, # Stripe specific
+    get_review_keyboard,
+    get_back_to_amount_keyboard,
     PAYMENT_DESCRIPTIONS,
-    STRIPE_METHOD_DESC,
-    WALLET_ADDRESSES
+    WALLET_ADDRESSES, # We need these for confirmation step
+    STRIPE_LINK # And this
 )
 from bot.keyboards.main import get_back_to_main_keyboard
 from bot.database.repositories import TransactionRepository
 from bot.database.models import User
+from bot.states import TransactionStates
+from bot.services.calculator import FeeCalculator
+from bot.services.logger import telegram_logger
 
 router = Router(name="transactions")
 logger = logging.getLogger(__name__)
 
-
-async def safe_answer_callback(callback: CallbackQuery, text: str = None, show_alert: bool = False) -> bool:
-    """Safely answer callback query, handling expired queries."""
-    try:
-        await callback.answer(text=text, show_alert=show_alert)
-        return True
-    except TelegramBadRequest as e:
-        if "query is too old" in str(e) or "query ID is invalid" in str(e):
-            logger.warning(f"Callback query expired: {e}")
-            return False
-        raise
-
 BANNER_PATH = Path(__file__).parent.parent / "assets" / "exchangeali.jpg"
 
+# --- Message Management Helper (One Message Policy) ---
 
-async def send_with_photo(
-    callback: CallbackQuery,
+async def update_interface(
+    event: Message | CallbackQuery,
     text: str,
-    keyboard,
-    try_edit: bool = True
+    keyboard = None,
+    photo_path: Path = BANNER_PATH,
+    state: FSMContext = None
 ) -> None:
-    """Send or edit message with photo."""
-    if try_edit:
+    """
+    Unified interface updater.
+    - If Callback: Edits the message (caption or text).
+    - If Message (User Input): Deletes user message, deletes old bot message (if tracked), sends new one.
+    - Ensures only one bot message exists.
+    """
+    # Try to delete user message if it's a message event
+    if isinstance(event, Message):
         try:
-            await callback.message.edit_caption(
-                caption=text,
-                reply_markup=keyboard,
-                parse_mode="HTML"
-            )
-            return
+            await event.delete()
         except Exception:
+            pass # Can't delete in private chat usually, but good to try
+
+    # Retrieve last bot message ID from state
+    last_msg_id = None
+    if state:
+        data = await state.get_data()
+        last_msg_id = data.get("last_bot_msg_id")
+
+    message_destionation = event.message if isinstance(event, CallbackQuery) else event
+
+    # Try editing if we have a target message (Callback or Stored ID)
+    target_msg = event.message if isinstance(event, CallbackQuery) else None
+    
+    # If we are in a callback, we can try to edit directly
+    if isinstance(event, CallbackQuery):
+        try:
+            if photo_path and photo_path.exists():
+                # If message has photo, edit caption
+                if event.message.photo:
+                    await event.message.edit_caption(caption=text, reply_markup=keyboard, parse_mode="HTML")
+                    return
+                else:
+                    # If message is text but we want photo, delete and resend
+                    await event.message.delete()
+            else:
+                 # If no photo needed, edit text
+                await event.message.edit_text(text=text, reply_markup=keyboard, parse_mode="HTML")
+                return
+        except Exception as e:
+            logger.warning(f"Edit failed, falling back to resend: {e}")
             pass
 
+    # Fallback or Message event: specific handling
+    # If we have a stored ID and we are processing a new user message, we might want to delete the old bot message
+    if isinstance(event, Message) and last_msg_id:
+        try:
+            await event.bot.delete_message(chat_id=event.chat.id, message_id=last_msg_id)
+        except Exception:
+            pass
+    
+    # Send new message
+    sent_msg = None
+    if photo_path and photo_path.exists():
+        photo = FSInputFile(photo_path)
+        sent_msg = await message_destionation.answer_photo(photo=photo, caption=text, reply_markup=keyboard, parse_mode="HTML")
+    else:
+        sent_msg = await message_destionation.answer(text=text, reply_markup=keyboard, parse_mode="HTML")
+    
+    # Update state with new message ID
+    if state and sent_msg:
+        await state.update_data(last_bot_msg_id=sent_msg.message_id)
+
+async def safe_answer_callback(callback: CallbackQuery) -> None:
     try:
-        await callback.message.delete()
+        await callback.answer()
     except Exception:
         pass
 
-    if BANNER_PATH.exists():
-        photo = FSInputFile(BANNER_PATH)
-        await callback.message.answer_photo(
-            photo=photo,
-            caption=text,
-            reply_markup=keyboard,
-            parse_mode="HTML"
-        )
-    else:
-        await callback.message.answer(
-            text=text,
-            reply_markup=keyboard,
-            parse_mode="HTML"
-        )
 
+# --- Flow Handlers ---
 
 @router.callback_query(F.data == "new_transaction")
-async def new_transaction(callback: CallbackQuery) -> None:
+async def start_transaction(callback: CallbackQuery, state: FSMContext) -> None:
     await safe_answer_callback(callback)
-
+    await state.clear() # Reset any previous state
+    
     text = (
         "🆕 <b>Новая транзакция</b>\n\n"
         "Выберите способ оплаты:"
     )
+    await update_interface(callback, text, get_payment_methods_keyboard(), state=state)
 
-    await send_with_photo(callback, text, get_payment_methods_keyboard())
-
-
-@router.callback_query(F.data == "pay_paypal")
-async def pay_paypal(callback: CallbackQuery) -> None:
+@router.callback_query(F.data.in_(PAYMENT_DESCRIPTIONS.keys()))
+async def select_method(callback: CallbackQuery, state: FSMContext) -> None:
     await safe_answer_callback(callback)
-    text = PAYMENT_DESCRIPTIONS["pay_paypal"]
-    await send_with_photo(callback, text, get_payment_detail_keyboard("pay_paypal"))
-
-
-@router.callback_query(F.data == "pay_crypto")
-async def pay_crypto(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-    text = PAYMENT_DESCRIPTIONS["pay_crypto"]
-    await send_with_photo(callback, text, get_payment_detail_keyboard("pay_crypto"))
-
-
-@router.callback_query(F.data == "pay_stripe")
-async def pay_stripe(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-    text = PAYMENT_DESCRIPTIONS["pay_stripe"]
-    await send_with_photo(callback, text, get_payment_detail_keyboard("pay_stripe"))
-
-
-@router.callback_query(F.data == "pay_stripe_list")
-async def pay_stripe_list(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-
+    payment_method = callback.data
+    
+    # Store selected method
+    await state.update_data(payment_method=payment_method)
+    
+    # Move to Amount Input
+    await state.set_state(TransactionStates.amount_input)
+    
     text = (
-        "💳 <b>Способы оплаты через Stripe</b>\n\n"
-        "Все способы ведут на единую страницу оплаты.\n"
-        "Выберите для подробностей:"
+        f"💰 <b>Введите сумму для обмена (USD)</b>\n\n"
+        f"Вы выбрали: {PAYMENT_DESCRIPTIONS.get(payment_method, callback.data).splitlines()[0]}\n"
+        "👇 Напишите число (например: 100)"
     )
+    
+    await update_interface(callback, text, get_back_to_amount_keyboard(), state=state)
 
-    await send_with_photo(callback, text, get_stripe_methods_keyboard())
+@router.callback_query(F.data == "change_amount")
+async def change_amount(callback: CallbackQuery, state: FSMContext) -> None:
+    # Re-trigger amount selection using stored data
+    data = await state.get_data()
+    payment_method = data.get("payment_method")
+    if not payment_method:
+        await start_transaction(callback, state) # Fallback
+        return
 
-
-@router.callback_query(F.data.startswith("stripe_"))
-async def stripe_method_detail(callback: CallbackQuery) -> None:
     await safe_answer_callback(callback)
-
-    method_key = callback.data
-    text = STRIPE_METHOD_DESC.get(method_key, "Описание недоступно.")
-
-    await send_with_photo(callback, text, get_stripe_detail_keyboard())
-
-
-# Copy address handlers - send copyable message
-@router.callback_query(F.data == "copy_paypal_email")
-async def copy_paypal_email(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-    email = WALLET_ADDRESSES["paypal_email"]
-    await callback.message.answer(
-        f"<code>{email}</code>\n\n👆 Нажмите чтобы скопировать",
-        parse_mode="HTML"
+    await state.set_state(TransactionStates.amount_input)
+    
+    text = (
+        f"💰 <b>Введите новую сумму (USD)</b>\n"
+        "👇 Напишите число:"
     )
+    await update_interface(callback, text, get_back_to_amount_keyboard(), state=state)
 
+@router.message(TransactionStates.amount_input)
+async def process_amount(message: Message, state: FSMContext) -> None:
+    try:
+        amount = float(message.text.replace(',', '.'))
+        if amount <= 0:
+            raise ValueError
+    except ValueError:
+        # Invalid input, stay in state but update simple error
+        text = "⚠️ <b>Ошибка:</b> Введите корректное число больше 0."
+        await update_interface(message, text, get_back_to_amount_keyboard(), state=state)
+        return
 
-@router.callback_query(F.data == "copy_usdt_trc20")
-async def copy_usdt_trc20(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-    address = WALLET_ADDRESSES["usdt_trc20"]
-    await callback.message.answer(
-        f"<b>USDT TRC20:</b>\n<code>{address}</code>\n\n👆 Нажмите чтобы скопировать",
-        parse_mode="HTML"
+    # Calculate Fees
+    data = await state.get_data()
+    payment_method = data.get("payment_method", "pay_paypal") # Default safe
+    
+    result = FeeCalculator.calculate(amount, payment_method)
+    
+    # Store result for confirmation
+    await state.update_data(calculation=result)
+    
+    # Create Review Text
+    method_name = PAYMENT_DESCRIPTIONS.get(payment_method, payment_method).splitlines()[0]
+    
+    review_text = (
+        f"🧾 <b>Подтверждение транзакции</b>\n\n"
+        f"🔹 Метод: {method_name}\n"
+        f"🔹 Вы отправляете: <b>${result['input_amount']:.2f}</b>\n"
+        f"🔸 Комиссия сервиса: ${result['service_fee']:.2f}\n"
+        f"🔸 P2P Комиссия: ${result['p2p_fee']:.2f}\n"
+        f"🔸 Комиссия шлюза: {result['method_fee_percent']}%\n\n"
+        f"💵 <b>Вы получите: ${result['total_payout']:.2f}</b>\n\n"
+        "Проверьте данные и подтвердите создание заявки."
     )
+    
+    # Clear state (keep data, remove state to prevent typing)
+    # await state.set_state(None) # Optional: keep state if we want them to be able to type new number? 
+    # Let's keep state None so they have to click Back to change
+    await state.set_state(None)
+    
+    await update_interface(message, review_text, get_review_keyboard(), state=state)
 
-
-@router.callback_query(F.data == "copy_usdt_bep20")
-async def copy_usdt_bep20(callback: CallbackQuery) -> None:
+@router.callback_query(F.data == "confirm_transaction")
+async def confirm_transaction(callback: CallbackQuery, state: FSMContext, session: AsyncSession, user: User) -> None:
     await safe_answer_callback(callback)
-    address = WALLET_ADDRESSES["usdt_bep20"]
-    await callback.message.answer(
-        f"<b>USDT BEP20:</b>\n<code>{address}</code>\n\n👆 Нажмите чтобы скопировать",
-        parse_mode="HTML"
-    )
+    data = await state.get_data()
+    result = data.get("calculation")
+    payment_method_key = data.get("payment_method")
+    
+    if not result:
+        await start_transaction(callback, state)
+        return
 
-
-@router.callback_query(F.data == "copy_btc")
-async def copy_btc(callback: CallbackQuery) -> None:
-    await safe_answer_callback(callback)
-    address = WALLET_ADDRESSES["btc"]
-    await callback.message.answer(
-        f"<b>BTC:</b>\n<code>{address}</code>\n\n👆 Нажмите чтобы скопировать",
-        parse_mode="HTML"
-    )
-
-
-@router.callback_query(F.data == "confirm_payment")
-async def confirm_payment(
-    callback: CallbackQuery,
-    session: AsyncSession,
-    db_user: User
-) -> None:
+    # Create Transaction in DB
     transaction_repo = TransactionRepository(session)
-
     await transaction_repo.create(
-        user_id=db_user.id,
-        payment_method="pending_selection"
+        user_id=user.id,
+        payment_method=payment_method_key,
+        amount=str(result['input_amount']), # Storing input amount
+        currency="USD"
     )
+    
+    # Notify Admin via Log Bot
+    try:
+        tg_user_obj = type('TgUser', (), {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'language_code': user.language_code,
+            'is_premium': user.is_premium
+        })
+        await telegram_logger.log_transaction(tg_user_obj, f"{payment_method_key} (${result['input_amount']:.2f}) -> Payout: ${result['total_payout']:.2f}")
+    except Exception:
+        pass
 
-    await safe_answer_callback(callback, "Транзакция создана!", show_alert=True)
+    # Show Final Interface with Payment Details
+    
+    # Get payment details text based on method
+    address_info = ""
+    if payment_method_key == "pay_paypal":
+        address_info = f"📧 Email: <code>{WALLET_ADDRESSES['paypal_email']}</code>"
+    elif payment_method_key == "pay_crypto":
+        address_info = (
+            f"👉 USDT TRC20: <code>{WALLET_ADDRESSES['usdt_trc20']}</code>\n"
+            f"👉 USDT BEP20: <code>{WALLET_ADDRESSES['usdt_bep20']}</code>\n"
+            f"👉 BTC: <code>{WALLET_ADDRESSES['btc']}</code>"
+        )
+    elif "stripe" in payment_method_key:
+        address_info = f"🔗 Ссылка: {STRIPE_LINK}"
 
-    text = (
-        "✅ <b>Транзакция создана</b>\n\n"
-        "После оплаты отправьте скриншот админу @herr_leutenant"
+    final_text = (
+        "✅ <b>Заявка создана!</b>\n\n"
+        f"Сумма к оплате: <b>${result['input_amount']:.2f}</b>\n\n"
+        f"{address_info}\n\n"
+        "⏳ <b>После оплаты отправьте скриншот/чек администратору: @herr_leutenant</b>\n"
+        "🚀 Средства будут зачислены после проверки."
     )
+    
+    await update_interface(callback, final_text, get_back_to_main_keyboard(), state=state)
+    await state.clear()
 
-    await send_with_photo(callback, text, get_back_to_main_keyboard())
+
+@router.callback_query(F.data == "cancel_transaction")
+async def cancel_transaction(callback: CallbackQuery, state: FSMContext) -> None:
+    await safe_answer_callback(callback)
+    await state.clear()
+    
+    text = "❌ Транзакция отменена."
+    await update_interface(callback, text, get_back_to_main_keyboard(), state=state)
+

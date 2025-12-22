@@ -108,9 +108,9 @@ Click the button below to deploy:
    - Add `VITE_API_URL` = `https://your-backend-api.com`
    - Redeploy
 
-3. Update bot configuration in `bot/keyboards/main.py`:
-```python
-WEBAPP_URL = "https://alihanminiapp.vercel.app"
+3. Update bot configuration in `.env`:
+```bash
+WEBAPP_URL=https://alihanminiapp.vercel.app/
 ```
 
 4. Register with BotFather:
@@ -162,10 +162,10 @@ server {
 
 ### Update Bot Configuration
 
-After deployment, update the Mini App URL in `bot/keyboards/main.py`:
+After deployment, update the Mini App URL in `.env`:
 
-```python
-WEBAPP_URL = "https://your-domain.com"
+```bash
+WEBAPP_URL=https://your-domain.com
 ```
 
 ## API Endpoints

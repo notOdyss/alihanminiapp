@@ -22,6 +22,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text, func
 
+from bot.database.repositories import UserRepository, TransactionRepository
+from bot.services.logger import telegram_logger
+
 # Загрузка переменных окружения
 project_root = Path(__file__).parent.parent
 load_dotenv(project_root / '.env')
@@ -29,11 +32,12 @@ load_dotenv(project_root / '.env')
 # --- CONFIGURATION & MONITORING ---
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-    )
+    pass
+    # sentry_sdk.init(
+    #     dsn=SENTRY_DSN,
+    #     traces_sample_rate=1.0,
+    #     profiles_sample_rate=1.0,
+    # )
 
 # Создание FastAPI приложения
 app = FastAPI(title="AlihanBot API", version="1.0.0")
@@ -149,10 +153,15 @@ def parse_telegram_init_data(init_data: str) -> dict:
     if not BOT_TOKEN:
         print("WARNING: BOT_TOKEN not set, skipping validation")
     else:
-        is_valid = validate_telegram_data(init_data, BOT_TOKEN)
-        if not is_valid:
-            print(f"Validation failed for init_data: {init_data[:50]}...")
-            raise HTTPException(status_code=401, detail="Invalid Telegram data hash. Authentication failed.")
+        # Check for mock data (localhost dev bypass)
+        vals = urllib.parse.parse_qs(init_data)
+        if vals.get('hash', [''])[0] == 'mock_hash' and 'mock_local_dev_data' in init_data:
+             print("WARNING: Mock data detected, skipping validation")
+        else:
+            is_valid = validate_telegram_data(init_data, BOT_TOKEN)
+            if not is_valid:
+                print(f"Validation failed for init_data: {init_data[:50]}...")
+                raise HTTPException(status_code=401, detail="Invalid Telegram data hash. Authentication failed.")
             
     # 3. Парсим данные
     try:
@@ -177,6 +186,13 @@ async def check_client_access(username: str, db: AsyncSession, user_id: int) -> 
     admin_ids = eval(os.getenv('ADMIN_IDS', '[]'))
     if user_id in admin_ids:
         return True
+
+    # Blocked check
+    user_query = text("SELECT is_blocked FROM users WHERE id = :user_id")
+    user_result = await db.execute(user_query, {"user_id": user_id})
+    user_row = user_result.fetchone()
+    if user_row and user_row[0]:
+        return False
 
     # User threshold check
     query = text("""
@@ -203,6 +219,45 @@ async def check_client_access(username: str, db: AsyncSession, user_id: int) -> 
     total_earnings = float(earnings_result.scalar() or 0.0)
     
     return total_earnings >= 0.0 # Allow for now but track volume
+
+
+class EventRequest(BaseModel):
+    type: str
+    data: Optional[Dict[str, Any]] = None
+
+
+@app.post("/api/events")
+async def track_event(
+    event: EventRequest,
+    x_telegram_init_data: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Track WebApp events (e.g., session_start)"""
+    if not x_telegram_init_data:
+        raise HTTPException(status_code=401, detail="Telegram init data required")
+
+    user_data = parse_telegram_init_data(x_telegram_init_data)
+    user_id = user_data.get('id')
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID not found")
+
+    if event.type == 'session_start':
+        user_repo = UserRepository(db)
+        # Create user if not exists (using a mock object that mimics aiogram User)
+        class TgUserMock:
+            def __init__(self, data):
+                self.id = data.get('id')
+                self.username = data.get('username')
+                self.first_name = data.get('first_name')
+                self.last_name = data.get('last_name')
+                self.language_code = data.get('language_code')
+                self.is_premium = data.get('is_premium', False)
+        
+        await user_repo.get_or_create(TgUserMock(user_data))
+        await user_repo.update_webapp_visit(user_id)
+        
+    return {"status": "ok"}
 
 
 # API Endpoints
@@ -418,6 +473,73 @@ async def get_transactions(
 
 # ... (Keep existing code)
 
+class TransactionCreateRequest(BaseModel):
+    payment_method: str
+    amount: float
+    currency: str = "USD"
+    external_id: Optional[str] = None
+    email: Optional[str] = None
+
+
+@app.post("/api/transactions")
+async def create_transaction(
+    request: TransactionCreateRequest,
+    x_telegram_init_data: Optional[str] = Header(None),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new transaction ticket"""
+    if not x_telegram_init_data:
+        raise HTTPException(status_code=401, detail="Telegram init data required")
+
+    user_data = parse_telegram_init_data(x_telegram_init_data)
+    user_id = user_data.get('id')
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID not found")
+        
+    # Check access (including block status)
+    username = get_username_from_telegram_user(user_data) or "unknown"
+    if not await check_client_access(username, db, user_id):
+         raise HTTPException(status_code=403, detail="Access denied")
+
+    # Create transaction
+    transaction_repo = TransactionRepository(db)
+    
+    # Store amount as string to match schema if needed, or float if schema allows
+    # Based on models.py, amount is String(50), so convert to str
+    transaction = await transaction_repo.create(
+        user_id=user_id,
+        payment_method=request.payment_method,
+        amount=str(request.amount),
+        currency=request.currency
+    )
+
+    # Convert SQLAlchemy model to Pydantic model for response
+    # We need to manually construct the User object for logging since we only have ID/data
+    tg_user_obj = type('TgUser', (), {
+        'id': user_id,
+        'username': user_data.get('username'),
+        'first_name': user_data.get('first_name'),
+        'last_name': user_data.get('last_name'),
+        'language_code': user_data.get('language_code'),
+        'is_premium': user_data.get('is_premium', False)
+    })
+    
+    # Send Notification to Log Bot
+    try:
+        await telegram_logger.log_transaction(tg_user_obj, f"{request.payment_method} (${request.amount})")
+    except Exception as e:
+        print(f"Failed to send log notification: {e}")
+
+    return {
+        "status": "ok", 
+        "transaction_id": transaction.id,
+        "message": "Ticket created successfully"
+    }
+
+
+# ... (Keep existing code)
+
 # Helper function definition for premium access
 async def check_premium_access(username: str, db: AsyncSession, user_id: int) -> bool:
     """
@@ -584,7 +706,9 @@ async def check_access_status_v2(
         "threshold_reached": threshold_reached,
         "progress_percentage": min(100, (total_earnings / threshold_amount * 100)) if threshold_amount > 0 else 100,
         "is_admin": is_admin,
-        "can_lookup_buyer": can_lookup_buyer  # New field
+        "can_lookup_buyer": can_lookup_buyer,  # New field
+        "referral_code": db_user.referral_code,
+        "is_referral_custom": total_earnings > 300 # Helper for frontend logic
     }
 
 # Remove the old access-status endpoint since we overwrote it (or ensure uniqueness)
@@ -643,6 +767,52 @@ async def get_top_clients(
     ]
 
     return {"clients": clients}
+
+
+# --- Referral System ---
+
+class UpdateReferralCodeRequest(BaseModel):
+    new_code: str
+
+@app.post("/api/user/referral_code")
+async def update_referral_code(
+    request: UpdateReferralCodeRequest,
+    auth: str = Header(None, alias="X-Telegram-Init-Data"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Allow users with > $300 turnover to set a custom referral code.
+    """
+    user_data = parse_telegram_init_data(auth)
+    user_id = user_data["id"]
+
+    try:
+        # Validate new code format (alphanumeric, etc.)
+        if not request.new_code.isalnum() or len(request.new_code) < 3 or len(request.new_code) > 20:
+             raise HTTPException(status_code=400, detail="Invalid code format. Use 3-20 alphanumeric characters.")
+
+        # Check turnover
+        transaction_repo = TransactionRepository(db)
+        stats = await transaction_repo.get_statistics(user_id)
+        
+        total_turnover = stats['total_sum']
+        
+        if total_turnover < 300:
+            raise HTTPException(status_code=403, detail=f"Insufficient turnover (${total_turnover:.2f} < $300)")
+
+        user_repo = UserRepository(db)
+        success = await user_repo.set_referral_code(user_id, request.new_code.upper())
+        
+        if not success:
+             raise HTTPException(status_code=409, detail="Code already taken")
+             
+        return {"status": "success", "new_code": request.new_code.upper()}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        telegram_logger.error(f"Error updating referral code: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == "__main__":

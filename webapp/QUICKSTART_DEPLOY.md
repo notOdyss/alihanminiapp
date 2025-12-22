@@ -36,11 +36,11 @@ git push -u origin main
 
 ## Step 3: Update Bot (1 minute)
 
-### Edit: `/Users/notodyss/Desktop/alihanbot/bot/keyboards/main.py`
+### Edit: `.env`
 
-```python
-# Change this line:
-WEBAPP_URL = "https://alihanminiapp.vercel.app"  # Your Vercel URL
+```bash
+# Add or update this line:
+WEBAPP_URL=https://alihanminiapp.vercel.app/
 ```
 
 ### Restart bot:
@@ -131,7 +131,7 @@ git push -u origin main --force
 - [ ] Push code to GitHub
 - [ ] Deploy to Vercel
 - [ ] Copy Vercel URL
-- [ ] Update bot/keyboards/main.py with URL
+- [ ] Update `WEBAPP_URL` in `.env`
 - [ ] Restart bot
 - [ ] Register with @BotFather
 - [ ] Test in Telegram

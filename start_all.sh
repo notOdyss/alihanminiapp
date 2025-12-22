@@ -34,6 +34,7 @@ pkill -f "sheets_sync/sync_service.py" || true
 pkill -f "sheets_sync/sync_service_v2.py" || true
 pkill -f "api/main.py" || true
 pkill -f "bot.main" || true
+pkill -f "logbot/main.py" || true
 pkill -f "run_bot.py" || true
 sleep 2
 echo "   ✅ Old processes stopped"
@@ -59,6 +60,14 @@ nohup python -m bot.main > logs/bot.log 2>&1 &
 BOT_PID=$!
 echo "   ✅ Telegram Bot started (PID: $BOT_PID)"
 
+# Start Log Bot (Admin Panel)
+echo ""
+echo "5. Starting Log Bot (Admin Panel)..."
+nohup python logbot/main.py > logs/logbot.log 2>&1 &
+LOGBOT_PID=$!
+echo "   ✅ Log Bot started (PID: $LOGBOT_PID)"
+
+
 # Wait and Check
 sleep 3
 
@@ -82,6 +91,13 @@ if ps -p $BOT_PID > /dev/null; then
 else
     echo "   ❌ Telegram Bot: FAILED (Check logs/bot.log)"
 fi
+
+if ps -p $LOGBOT_PID > /dev/null; then
+    echo "   ✅ Log Bot: RUNNING"
+else
+    echo "   ❌ Log Bot: FAILED (Check logs/logbot.log)"
+fi
+
 
 echo ""
 echo "======================================================================"

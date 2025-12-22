@@ -3,8 +3,16 @@ import { useTelegram } from './TelegramContext'
 
 const DataContext = createContext(null)
 
-// ⚠️ HARDCODED URL FOR PRODUCTION - CHANGE IF NGROK RESTARTS
-const API_URL = 'https://floy-effluvial-chaim.ngrok-free.dev/api'
+// ⚠️ PRODUCTION: Set VITE_API_URL in Vercel/Netlify environment variables
+// Fallback to ngrok for local development convenience
+const DEFAULT_API_URL = 'https://floy-effluvial-chaim.ngrok-free.dev/api'
+const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL
+
+if (!import.meta.env.VITE_API_URL) {
+  console.warn(`[DataContext] VITE_API_URL not found. Using default: ${DEFAULT_API_URL}`)
+} else {
+  console.log(`[DataContext] Using API URL from env: ${API_URL}`)
+}
 
 export const DataProvider = ({ children }) => {
   const { tg, user } = useTelegram()
@@ -21,6 +29,8 @@ export const DataProvider = ({ children }) => {
     totalSum: 0,
     avgChecksMonth: 0,
     avgSumMonth: 0,
+    referralCode: '',
+    isReferralCustom: false
   })
   const [loading, setLoading] = useState(true)
   const [debugLogs, setDebugLogs] = useState([])
@@ -64,15 +74,38 @@ export const DataProvider = ({ children }) => {
           fetchData(tg.initData)
         } else {
           // Timeout reached and still no initData. 
-          // Likely running in browser or Telegram failed to inject data.
-          addLog(`Timeout: No initData found.`)
-          // We do NOT fetch here to avoid 401. We just stop loading.
-          setLoading(false)
+          // Check if we are on localhost to use mock data
+          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            addLog(`Localhost detected. Using MOCK initData.`)
+            hasFetched.current = true
+            fetchData('query_id=mock_local_dev_data&user=%7B%22id%22%3A12345%2C%22first_name%22%3A%22LocalDev%22%2C%22last_name%22%3A%22User%22%2C%22username%22%3A%22local_dev%22%7D&auth_date=1712345678&hash=mock_hash')
+          } else {
+            addLog(`Timeout: No initData found.`)
+            // We do NOT fetch here to avoid 401. We just stop loading.
+            setLoading(false)
+          }
         }
       }
     }, 3000) // Wait 3 seconds
 
     return () => clearTimeout(timeout)
+  }, [tg])
+
+  // Track session start
+  useEffect(() => {
+    if (tg?.initData && !hasFetched.current) {
+      // Fire and forget session tracking
+      const headers = {
+        'X-Telegram-Init-Data': tg.initData,
+        'ngrok-skip-browser-warning': 'true',
+        'Content-Type': 'application/json'
+      }
+      fetch(`${API_URL}/events`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ type: 'session_start' })
+      }).catch(err => console.error('Failed to track session:', err))
+    }
   }, [tg])
 
   const fetchData = async (initData) => {

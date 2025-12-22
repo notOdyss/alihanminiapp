@@ -11,7 +11,24 @@ export const TelegramProvider = ({ children }) => {
     if (telegram) {
       telegram.ready()
       setTg(telegram)
-      setUser(telegram.initDataUnsafe?.user || null)
+
+      const tgUser = telegram.initDataUnsafe?.user
+      if (tgUser) {
+        setUser(tgUser)
+      } else {
+        // Localhost / Dev fallback
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('Localhost detected: Using mock Telegram user')
+          setUser({
+            id: 12345,
+            first_name: 'LocalDev',
+            last_name: 'User',
+            username: 'local_dev'
+          })
+        } else {
+          setUser(null)
+        }
+      }
     }
   }, [])
 

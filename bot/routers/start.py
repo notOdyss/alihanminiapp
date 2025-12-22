@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from aiogram import Router, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,11 +73,35 @@ async def edit_with_photo(
 @router.message(CommandStart())
 async def cmd_start(
     message: Message,
+    command: CommandObject,
     session: AsyncSession,
     db_user: User,
     is_new_user: bool
 ) -> None:
     user = message.from_user
+    user_repo = UserRepository(session)
+
+    # 1. Generate Referral Code for new user if None (or existing without one)
+    if not db_user.referral_code:
+        code = await user_repo.generate_unique_referral_code()
+        await user_repo.set_referral_code(db_user.id, code)
+
+    # 2. Check for referrer attribution
+    # 2. Check for referrer attribution
+    args = command.args
+    if args:
+        if db_user.referrer_id:
+             await telegram_logger.send_log(f"ℹ️ Referral ignored for {user.mention_html()}: Already has referrer.")
+        else:
+            referrer = await user_repo.assign_referrer(db_user.id, args)
+            if referrer:
+                try:
+                    msg = f"🎉 <b>New Referral!</b>\n\nUser: {message.from_user.mention_html()}\nReferrer: {referrer.username or referrer.id} (Code: {args})"
+                    await telegram_logger.send_log(msg)
+                except Exception:
+                    pass
+            else:
+                 await telegram_logger.send_log(f"⚠️ Referral failed for {user.mention_html()}: Code '{args}' not found or self-referral.")
 
     if is_new_user:
         try:

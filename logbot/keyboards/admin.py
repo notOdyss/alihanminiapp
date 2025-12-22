@@ -32,7 +32,11 @@ def get_admin_main_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def get_user_detail_keyboard(user_id: int) -> InlineKeyboardMarkup:
+def get_user_detail_keyboard(user_id: int, is_blocked: bool = False) -> InlineKeyboardMarkup:
+    # Determine block button text and action
+    block_text = "🔓 Unblock User" if is_blocked else "🚫 Block User"
+    block_action = "off" if is_blocked else "on"
+    
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -45,6 +49,12 @@ def get_user_detail_keyboard(user_id: int) -> InlineKeyboardMarkup:
                 InlineKeyboardButton(
                     text="💳 Transactions",
                     callback_data=f"user_transactions_{user_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=block_text,
+                    callback_data=f"admin_block_{block_action}_{user_id}"
                 )
             ],
             [

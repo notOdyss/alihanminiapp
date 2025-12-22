@@ -83,15 +83,38 @@ class GoogleSheetsSync:
         print(f"✅ Google Sheets client initialized")
 
     def parse_date(self, day: str, month: str, year: str) -> Optional[date]:
-        """Parse date from three fields"""
+        """Parse date from three fields (Day, MonthName, Year)"""
+        MONTH_MAP = {
+            'январь': 1, 'января': 1,
+            'февраль': 2, 'февраля': 2,
+            'март': 3, 'марта': 3,
+            'апрель': 4, 'апреля': 4,
+            'май': 5, 'мая': 5,
+            'июнь': 6, 'июня': 6,
+            'июль': 7, 'июля': 7,
+            'август': 8, 'августа': 8,
+            'сентябрь': 9, 'сентября': 9,
+            'октябрь': 10, 'октября': 10,
+            'ноябрь': 11, 'ноября': 11,
+            'декабрь': 12, 'декабря': 12
+        }
         try:
             d = int(day) if day else 1
-            m = int(month) if month else 1
+            
+            # Month parsing
+            m = 1
+            if month:
+                clean_month = month.strip().lower()
+                if clean_month.isdigit():
+                    m = int(clean_month)
+                else:
+                    m = MONTH_MAP.get(clean_month, 1) # Default to Jan if unknown? Or maybe current month?
+            
             y = int(year) if year else datetime.now().year
-            if y < 100: 
-                y += 2000
-            if y < 1900 or y > 2100:
-                y = datetime.now().year
+            
+            if y < 100: y += 2000
+            if y < 1900 or y > 2100: y = datetime.now().year
+            
             return date(y, m, d)
         except (ValueError, TypeError):
             return None

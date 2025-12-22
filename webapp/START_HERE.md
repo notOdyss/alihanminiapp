@@ -111,9 +111,9 @@ git push -u origin main
 
 ### Phase 3: Connect to Bot
 
-1. **Edit** `bot/keyboards/main.py`:
-   ```python
-   WEBAPP_URL = "https://alihanminiapp.vercel.app"
+1. **Edit** `.env` in the root directory:
+   ```bash
+   WEBAPP_URL=https://alihanminiapp.vercel.app/
    ```
 
 2. **Restart bot**:

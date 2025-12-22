@@ -128,11 +128,11 @@ The Mini App will work in demo mode without backend API.
 
 ### Update the bot to use your Vercel URL:
 
-1. Open `bot/keyboards/main.py` on your local machine
+1. Open `.env` in the root directory
 
-2. Update this line:
-```python
-WEBAPP_URL = "https://alihanminiapp.vercel.app"  # Your Vercel URL
+2. Add or update this line:
+```bash
+WEBAPP_URL=https://alihanminiapp.vercel.app/
 ```
 
 3. Restart your bot:
@@ -278,8 +278,8 @@ git push
 # Import: notOdyss/alihanminiapp
 
 # 3. Update bot
-# Edit: bot/keyboards/main.py
-# Set: WEBAPP_URL = "https://alihanminiapp.vercel.app"
+# Edit: .env
+# Set: WEBAPP_URL=https://alihanminiapp.vercel.app/
 
 # 4. Register with BotFather
 # /setmenubutton → URL

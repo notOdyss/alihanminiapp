@@ -1,0 +1,56 @@
+.referral-page {
+    padding: 20px;
+    color: var(--tg-theme-text-color);
+}
+
+.card {
+    background: var(--tg-theme-bg-color);
+    border: 1px solid var(--tg-theme-hint-color);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.code-display {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: var(--tg-theme-button-color);
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color);
+}
+
+.custom-code-card input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--tg-theme-hint-color);
+    margin-bottom: 10px;
+    background: var(--tg-theme-secondary-bg-color);
+    color: var(--tg-theme-text-color);
+}
+
+.custom-code-card button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.status-msg {
+    margin-top: 10px;
+    font-size: 14px;
+}

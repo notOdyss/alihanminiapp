@@ -87,3 +87,12 @@ class EducationSession(Base):
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class LegacyReferral(Base):
+    """Temporary storage for referrals of users who haven't started the bot yet"""
+    __tablename__ = "legacy_referrals"
+
+    username: Mapped[str] = mapped_column(String(255), primary_key=True)
+    referral_code: Mapped[str] = mapped_column(String(50))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -107,87 +107,33 @@ def get_stripe_methods_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def get_payment_detail_keyboard(payment_type: str) -> InlineKeyboardMarkup:
-    """Detail view with action buttons."""
-    buttons = []
+# ... existing code ...
 
-    if payment_type == "pay_paypal":
-        buttons.append([
-            InlineKeyboardButton(
-                text="📋 Скопировать email",
-                callback_data="copy_paypal_email"
-            )
-        ])
-    elif payment_type == "pay_crypto":
-        buttons.append([
-            InlineKeyboardButton(
-                text="📋 USDT TRC20",
-                callback_data="copy_usdt_trc20"
-            )
-        ])
-        buttons.append([
-            InlineKeyboardButton(
-                text="📋 USDT BEP20",
-                callback_data="copy_usdt_bep20"
-            )
-        ])
-        buttons.append([
-            InlineKeyboardButton(
-                text="📋 BTC",
-                callback_data="copy_btc"
-            )
-        ])
-    elif payment_type == "pay_stripe":
-        buttons.append([
-            InlineKeyboardButton(
-                text="🔗 Открыть ссылку для оплаты",
-                url=STRIPE_LINK
-            )
-        ])
-        buttons.append([
-            InlineKeyboardButton(
-                text="📋 Все способы оплаты",
-                callback_data="pay_stripe_list"
-            )
-        ])
-
-    buttons.append([
-        InlineKeyboardButton(text="⬅️ Назад", callback_data="new_transaction")
-    ])
-    buttons.append([
-        InlineKeyboardButton(text="🏠 Главное меню", callback_data="back_to_main")
-    ])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-
-def get_stripe_detail_keyboard() -> InlineKeyboardMarkup:
-    """Single Stripe method detail."""
+def get_review_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard for Review step."""
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(
-                    text="🔗 Перейти к оплате",
-                    url=STRIPE_LINK
-                )
+                InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_transaction")
             ],
             [
-                InlineKeyboardButton(
-                    text="⬅️ Все способы",
-                    callback_data="pay_stripe_list"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="🏠 Главное меню",
-                    callback_data="back_to_main"
-                )
+                InlineKeyboardButton(text="⬅️ Изменить сумму", callback_data="change_amount"),
+                InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_transaction")
             ]
         ]
     )
 
+def get_back_to_amount_keyboard() -> InlineKeyboardMarkup:
+    """Back button for amount input."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_transaction")]
+        ]
+    )
 
-# Wallet addresses for copy functionality
-WALLET_ADDRESSES = {
+
+# Wallet addresses for payment/copy functionality
+WALLET_ADDRESSES: dict[str, str] = {
     "usdt_trc20": "TXtFDSaQmDVkcUjUgebHqjAYDPCQSX63nU",
     "usdt_bep20": "0x5153df0aee547bc26e96848eac042a2e9367e368",
     "btc": "3B5mwDD5B2BhWuWYihA4cciDpknb6u5gwi",

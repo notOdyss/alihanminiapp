@@ -43,7 +43,23 @@ class UserRepository:
                 user.last_name = tg_user.last_name
             await self._session.flush()
             return user, False
+
+        # Create new user
         user = await self.create_from_tg_user(tg_user)
+        
+        # Check Legacy Referrals
+        if user.username:
+            from bot.database.models import LegacyReferral
+            result = await self._session.execute(
+                select(LegacyReferral).where(LegacyReferral.username.ilike(user.username))
+            )
+            legacy = result.scalar_one_or_none()
+            if legacy:
+                # Migrate code
+                await self.set_referral_code(user.id, legacy.referral_code)
+                await self._session.delete(legacy)
+                await self._session.flush()
+
         return user, True
 
     async def update_webapp_visit(self, user_id: int) -> None:
@@ -92,3 +108,51 @@ class UserRepository:
             select(User).order_by(User.created_at.desc()).limit(limit)
         )
         return list(result.scalars().all())
+
+    async def set_block_status(self, user_id: int, is_blocked: bool) -> bool:
+        user = await self.get_by_id(user_id)
+        if user:
+            user.is_blocked = is_blocked
+            await self._session.flush()
+            return True
+        return False
+
+    async def get_by_referral_code(self, code: str) -> Optional[User]:
+        if not code: return None
+        result = await self._session.execute(
+            select(User).where(User.referral_code == code)
+        )
+        return result.scalar_one_or_none()
+
+    async def set_referral_code(self, user_id: int, new_code: str) -> bool:
+        # Check uniqueness
+        existing = await self.get_by_referral_code(new_code)
+        if existing and existing.id != user_id:
+            return False # Taken
+        
+        user = await self.get_by_id(user_id)
+        if user:
+            user.referral_code = new_code
+            await self._session.flush()
+            return True
+        return False
+
+    async def generate_unique_referral_code(self) -> str:
+        import random
+        import string
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
+            if not await self.get_by_referral_code(code):
+                return code
+
+    async def assign_referrer(self, user_id: int, referrer_code: str) -> Optional[User]:
+        user = await self.get_by_id(user_id)
+        # Only assign if no referrer and not self
+        if user and user.referrer_id is None:
+            referrer = await self.get_by_referral_code(referrer_code)
+            if referrer and referrer.id != user.id:
+                user.referrer_id = referrer.id
+                await self._session.flush()
+                await self._session.flush()
+                return referrer
+        return None

@@ -27,9 +27,10 @@ def is_admin(user_id: int) -> bool:
 
 
 @router.message(Command("admin"))
+@router.message(Command("start"))
 async def admin_panel(message: Message, session: AsyncSession) -> None:
     if not is_admin(message.from_user.id):
-        await message.answer("⛔ Access denied.")
+        await message.answer("⛔ Access denied. This bot is for admins only.")
         return
 
     user_repo = UserRepository(session)
@@ -249,7 +250,7 @@ async def show_user_details(
 
     await message.answer(
         text=text,
-        reply_markup=get_user_detail_keyboard(user_id),
+        reply_markup=get_user_detail_keyboard(user_id, stats['is_blocked']),
         parse_mode="HTML"
     )
 
@@ -419,6 +420,31 @@ async def admin_user_detail(callback: CallbackQuery, session: AsyncSession) -> N
     await callback.answer()
     await callback.message.edit_text(
         text=text,
-        reply_markup=get_user_detail_keyboard(user_id),
+        reply_markup=get_user_detail_keyboard(user_id, stats['is_blocked']),
         parse_mode="HTML"
     )
+
+
+@router.callback_query(F.data.startswith("admin_block_"))
+async def admin_toggle_block(callback: CallbackQuery, session: AsyncSession) -> None:
+    if not is_admin(callback.from_user.id):
+        await callback.answer("⛔ Access denied.", show_alert=True)
+        return
+
+    parts = callback.data.split("_")
+    # Format: admin_block_{action}_{user_id}
+    # action: on (to block), off (to unblock)
+    action = parts[2]
+    user_id = int(parts[3])
+
+    user_repo = UserRepository(session)
+    is_blocked = (action == "on")
+    success = await user_repo.set_block_status(user_id, is_blocked)
+
+    if success:
+        status_text = "blocked" if is_blocked else "unblocked"
+        await callback.answer(f"User {status_text} successfully!", show_alert=True)
+        # Refresh details
+        await admin_user_detail(callback, session)
+    else:
+        await callback.answer("Failed to update user status.", show_alert=True)

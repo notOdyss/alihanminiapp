@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     ADMIN_IDS: list[int] = []
 
+    WEBAPP_URL: str
+
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -243,10 +243,9 @@ git push -u origin main
 # 4. Deploy!
 ```
 
-После деплоя обновите в боте:
-```python
-# bot/handlers/webapp.py
-WEBAPP_URL = "https://your-app.vercel.app"
+После деплоя обновите в `.env`:
+```bash
+WEBAPP_URL=https://your-app.vercel.app
 ```
 
 ---

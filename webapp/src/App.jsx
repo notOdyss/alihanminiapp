@@ -9,6 +9,7 @@ import Transactions from './pages/Transactions'
 import Calculator from './pages/Calculator'
 import Balance from './pages/Balance'
 import Statistics from './pages/Statistics'
+import Referral from './pages/Referral'
 import More from './pages/More'
 import LoadingScreen from './components/ui/LoadingScreen'
 import './App.css'
@@ -70,6 +71,7 @@ function AppContent() {
           <Route path="calculator" element={<Calculator />} />
           <Route path="balance" element={<Balance />} />
           <Route path="statistics" element={<Statistics />} />
+          <Route path="referral" element={<div className="page-wrapper"><Referral /></div>} />
           <Route path="more" element={<More />} />
         </Route>
       </Routes>

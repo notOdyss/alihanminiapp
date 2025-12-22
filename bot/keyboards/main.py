@@ -1,8 +1,10 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 
+from bot.config import settings
+
 # URL вашего Mini App (замените на свой)
-WEBAPP_URL = "https://alihanminiapp.vercel.app/"
+WEBAPP_URL = settings.WEBAPP_URL
 
 
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:

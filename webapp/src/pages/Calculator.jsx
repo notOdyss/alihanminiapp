@@ -1,7 +1,8 @@
-
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { useToast } from '../context/ToastContext'
+import { useTelegram } from '../context/TelegramContext' // Added for tg.initData
+import Modal from '../components/ui/Modal'
 import './Calculator.css'
 
 const methods = [
@@ -48,10 +49,50 @@ const methods = [
 export default function Calculator() {
   const { t } = useLanguage()
   const { addToast } = useToast()
+  const { tg } = useTelegram()
   const [selectedMethod, setSelectedMethod] = useState(methods[0])
   const [amount, setAmount] = useState('')
   const [result, setResult] = useState(null)
   const [animationClass, setAnimationClass] = useState('')
+
+  // Ticket State
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const API_URL = import.meta.env.VITE_API_URL || 'https://floy-effluvial-chaim.ngrok-free.dev/api'
+
+  const handleCreateTicket = async () => {
+    if (!tg?.initData) {
+      addToast('Please open in Telegram to create a ticket', 'error')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`${API_URL}/transactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Init-Data': tg.initData,
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({
+          payment_method: selectedMethod.name,
+          amount: parseFloat(amount),
+          currency: 'USD'
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to create ticket')
+
+      addToast('Ticket created successfully!', 'success')
+      setShowTicketModal(false)
+    } catch (error) {
+      console.error(error)
+      addToast('Error creating ticket', 'error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const calculate = (amt, method) => {
     const saleAmount = parseFloat(amt) || 0
@@ -193,6 +234,14 @@ export default function Calculator() {
                 <span>Net ~{Math.round(result.distribution.net)}%</span>
                 <span>Fees ~{Math.round(result.distribution.fees)}%</span>
               </div>
+
+              {/* CREATE TICKET BUTTON */}
+              <button
+                className="create-ticket-btn"
+                onClick={() => setShowTicketModal(true)}
+              >
+                Create Exchange Ticket
+              </button>
             </div>
 
             <div className="breakdown-list">
@@ -232,6 +281,33 @@ export default function Calculator() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={showTicketModal}
+        onClose={() => setShowTicketModal(false)}
+        title="Confirm Ticket"
+      >
+        <div className="ticket-modal-content">
+          <p>Create a ticket for <b>{formatCurrency(amount)}</b> via <b>{selectedMethod.name}</b>?</p>
+          <p className="ticket-subtext">You will receive approximately <b>{result?.total ? formatCurrency(result.total) : '$0.00'}</b>.</p>
+
+          <div className="modal-actions">
+            <button
+              className="modal-btn secondary"
+              onClick={() => setShowTicketModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="modal-btn primary"
+              onClick={handleCreateTicket}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Creating...' : 'Confirm Ticket'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
