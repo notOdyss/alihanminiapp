@@ -85,6 +85,8 @@ const translations = {
     vipProgress: 'Прогресс к VIP',
     spent: 'потрачено',
     unlockVip: 'До VIP статуса',
+    referralCodeCreated: 'Реферальный код создан!',
+    linkCopied: 'Ссылка скопирована!',
 
     // Buyer Lookup
     enterEmail: 'Введите email покупателя',
@@ -182,6 +184,8 @@ const translations = {
     vipProgress: 'VIP Progress',
     spent: 'spent',
     unlockVip: 'Until VIP status',
+    referralCodeCreated: 'Referral code created!',
+    linkCopied: 'Link copied!',
 
     // Buyer Lookup
     enterEmail: 'Enter buyer email',

@@ -43,7 +43,7 @@ export default function More() {
     const code = await createCode()
     if (code) {
       setReferralCode(code)
-      addToast('Referral code created!', 'success')
+      addToast(t('referralCodeCreated'), 'success')
     }
   }
 
@@ -51,7 +51,7 @@ export default function More() {
     if (referralCode) {
       const link = `https://t.me/exchangeali_bot?start=${referralCode}`
       navigator.clipboard.writeText(link)
-      addToast('Ссылка скопирована!', 'success')
+      addToast(t('linkCopied'), 'success')
     }
   }
 
