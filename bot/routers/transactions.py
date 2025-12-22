@@ -12,6 +12,7 @@ from bot.keyboards.transactions import (
     get_stripe_methods_keyboard, # Stripe specific
     get_review_keyboard,
     get_back_to_amount_keyboard,
+    get_payment_confirmation_keyboard,
     PAYMENT_DESCRIPTIONS,
     WALLET_ADDRESSES, # We need these for confirmation step
     STRIPE_LINK # And this
@@ -112,6 +113,16 @@ async def safe_answer_callback(callback: CallbackQuery) -> None:
 @router.callback_query(F.data == "new_transaction")
 async def start_transaction(callback: CallbackQuery, state: FSMContext) -> None:
     await safe_answer_callback(callback)
+    
+    # Aggressive Cleanup: Try to find old message before clearing state
+    data = await state.get_data()
+    last_msg_id = data.get("last_bot_msg_id")
+    if last_msg_id:
+        try:
+            await callback.bot.delete_message(chat_id=callback.message.chat.id, message_id=last_msg_id)
+        except Exception:
+            pass
+            
     await state.clear() # Reset any previous state
     
     text = (
@@ -200,7 +211,7 @@ async def process_amount(message: Message, state: FSMContext) -> None:
     await update_interface(message, review_text, get_review_keyboard(), state=state)
 
 @router.callback_query(F.data == "confirm_transaction")
-async def confirm_transaction(callback: CallbackQuery, state: FSMContext, session: AsyncSession, user: User) -> None:
+async def confirm_transaction(callback: CallbackQuery, state: FSMContext, session: AsyncSession, db_user: User) -> None:
     await safe_answer_callback(callback)
     data = await state.get_data()
     result = data.get("calculation")
@@ -212,8 +223,8 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext, sessio
 
     # Create Transaction in DB
     transaction_repo = TransactionRepository(session)
-    await transaction_repo.create(
-        user_id=user.id,
+    transaction = await transaction_repo.create(
+        user_id=db_user.id,
         payment_method=payment_method_key,
         amount=str(result['input_amount']), # Storing input amount
         currency="USD"
@@ -222,14 +233,15 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext, sessio
     # Notify Admin via Log Bot
     try:
         tg_user_obj = type('TgUser', (), {
-            'id': user.id,
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'language_code': user.language_code,
-            'is_premium': user.is_premium
+            'id': db_user.id,
+            'username': db_user.username,
+            'first_name': db_user.first_name,
+            'last_name': db_user.last_name,
+            'language_code': db_user.language_code,
+            'is_premium': False
         })
-        await telegram_logger.log_transaction(tg_user_obj, f"{payment_method_key} (${result['input_amount']:.2f}) -> Payout: ${result['total_payout']:.2f}")
+        log_msg = f"🆕 <b>Transaction Created</b>\nMethod: {payment_method_key}\nAmount: ${result['input_amount']:.2f}\nPayout: ${result['total_payout']:.2f}"
+        await telegram_logger.log_transaction(tg_user_obj, log_msg)
     except Exception:
         pass
 
@@ -252,8 +264,39 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext, sessio
         "✅ <b>Заявка создана!</b>\n\n"
         f"Сумма к оплате: <b>${result['input_amount']:.2f}</b>\n\n"
         f"{address_info}\n\n"
-        "⏳ <b>После оплаты отправьте скриншот/чек администратору: @herr_leutenant</b>\n"
-        "🚀 Средства будут зачислены после проверки."
+        "⏳ <b>После оплаты нажмите кнопку «Я оплатил» ниже.</b>"
+    )
+    
+    await update_interface(callback, final_text, get_payment_confirmation_keyboard(), state=state)
+    # Store transaction ID for the next step
+    await state.update_data(transaction_id=transaction.id)
+
+@router.callback_query(F.data == "i_paid")
+async def payment_confirmed(callback: CallbackQuery, state: FSMContext, session: AsyncSession, db_user: User) -> None:
+    await safe_answer_callback(callback)
+    data = await state.get_data()
+    result = data.get("calculation")
+    
+    # Notify Admin
+    try:
+        tg_user_obj = type('TgUser', (), {
+            'id': db_user.id,
+            'username': db_user.username,
+            'first_name': db_user.first_name,
+            'last_name': db_user.last_name,
+            'language_code': db_user.language_code,
+            'is_premium': False
+        })
+        amount = result['input_amount'] if result else "?"
+        log_msg = f"✅ <b>Payment Confirmed by User</b>\nAmount: ${amount}"
+        await telegram_logger.log_transaction(tg_user_obj, log_msg)
+    except Exception:
+        pass
+
+    final_text = (
+        "✅ <b>Оплата подтверждена!</b>\n\n"
+        "Ваш платеж поступит на обработку. Ожидайте зачисления средств.\n"
+        "Если возникнут вопросы - администратор свяжется с вами."
     )
     
     await update_interface(callback, final_text, get_back_to_main_keyboard(), state=state)

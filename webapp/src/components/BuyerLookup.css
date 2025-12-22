@@ -80,19 +80,20 @@
     transform: none;
 }
 
-/* Results */
-.lookup-results {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--bg-glass-border);
-    animation: fadeInUp 0.4s ease forwards;
+/* Results in Modal */
+.lookup-result-modal {
+    padding-top: 10px;
 }
 
 .result-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    background: var(--bg-tertiary);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--bg-glass-border);
 }
 
 .result-avatar {
@@ -104,6 +105,12 @@
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    color: white;
+    font-weight: bold;
+}
+
+.result-info {
+    overflow: hidden;
 }
 
 .result-info h4 {
@@ -111,7 +118,9 @@
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 4px;
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .result-info span {
@@ -119,47 +128,16 @@
     color: var(--text-hint);
 }
 
-.result-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+/* Override Stat Box within Modal for better fit */
+.lookup-result-modal .stat-box {
+    padding: 12px 16px;
+    min-height: 80px;
+    justify-content: center;
 }
 
-.result-stat {
-    background: var(--bg-tertiary);
-    padding: 16px;
-    border-radius: var(--radius-md);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.result-stat span {
-    font-size: 11px;
-    color: var(--text-hint);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.result-stat strong {
-    font-size: 18px;
-    font-weight: 700;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Net amount highlight */
-.result-stat.highlight {
-    background: linear-gradient(135deg, rgba(0, 201, 167, 0.1) 0%, rgba(0, 255, 195, 0.05) 100%);
-    border: 1px solid rgba(0, 201, 167, 0.2);
-}
-
-.result-stat.highlight strong {
-    background: var(--gradient-success);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.lookup-result-modal .stat-number {
+    font-size: clamp(14px, 4.5vw, 20px);
+    /* Explicitly smaller for modal data */
 }
 
 /* Error */
@@ -202,12 +180,13 @@
     line-height: 1.5;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
     .lookup-form {
         flex-direction: column;
     }
 
-    .result-stat strong {
-        font-size: 16px;
+    .lookup-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

@@ -137,12 +137,37 @@
 }
 
 /* Responsive */
-@media (max-width: 380px) {
+@media (max-width: 480px) {
+  .statistics-page {
+    padding-bottom: 80px;
+  }
+
+  .stats-grid {
+    gap: 8px;
+    padding: 0 var(--space-md);
+  }
+
+  .stat-box {
+    padding: 16px;
+  }
+
   .stat-number {
-    font-size: 22px;
+    font-size: 20px;
+    /* Smaller base size for mobile */
+  }
+
+  /* Handle long numbers/dates */
+  .stat-number {
+    font-size: clamp(16px, 5vw, 22px);
+    word-break: break-word;
+    /* Prevent overflow */
   }
 
   .stat-box:last-child .stat-number {
-    font-size: 26px;
+    font-size: 24px;
+  }
+
+  .stat-title {
+    font-size: 11px;
   }
 }

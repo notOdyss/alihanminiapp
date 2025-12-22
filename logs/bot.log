@@ -1,5 +1,11 @@
-2025-12-22 16:23:29,731 - __main__ - INFO - Database initialized
-2025-12-22 16:23:29,731 - __main__ - INFO - Starting Exchange Bot...
-2025-12-22 16:23:29,739 - __main__ - INFO - Bot is running...
-2025-12-22 16:23:29,739 - aiogram.dispatcher - INFO - Start polling
-2025-12-22 16:23:30,294 - aiogram.dispatcher - INFO - Run polling for bot @exchangeali_bot id=8300934474 - 'Обменник by Ali Bot 🛍'
+2025-12-22 16:53:11,700 - __main__ - INFO - Database initialized
+2025-12-22 16:53:11,700 - __main__ - INFO - Starting Exchange Bot...
+2025-12-22 16:53:11,712 - __main__ - INFO - Bot is running...
+2025-12-22 16:53:11,712 - aiogram.dispatcher - INFO - Start polling
+2025-12-22 16:53:12,109 - aiogram.dispatcher - INFO - Run polling for bot @exchangeali_bot id=8300934474 - 'Обменник by Ali Bot 🛍'
+2025-12-22 16:53:14,133 - aiogram.event - INFO - Update id=962399577 is handled. Duration 1846 ms by bot id=8300934474
+2025-12-22 16:53:16,820 - aiogram.event - INFO - Update id=962399578 is handled. Duration 1732 ms by bot id=8300934474
+2025-12-22 16:53:20,009 - aiogram.event - INFO - Update id=962399579 is handled. Duration 1253 ms by bot id=8300934474
+2025-12-22 16:53:22,738 - aiogram.event - INFO - Update id=962399580 is handled. Duration 1770 ms by bot id=8300934474
+2025-12-22 16:53:29,864 - aiogram.event - INFO - Update id=962399581 is handled. Duration 1198 ms by bot id=8300934474
+2025-12-22 16:53:42,820 - aiogram.event - INFO - Update id=962399582 is handled. Duration 1035 ms by bot id=8300934474

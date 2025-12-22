@@ -1,4 +1,9 @@
-INFO:     Started server process [36492]
+INFO:     Started server process [40428]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+Starting without SSL (HTTP only)
+INFO:     2.72.8.115:0 - "GET /api/access-status HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "GET /api/access-status HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "OPTIONS /api/buyer/lookup?email=Treysweeney1182%40yahoo.com HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "GET /api/buyer/lookup?email=Treysweeney1182%40yahoo.com HTTP/1.1" 200 OK

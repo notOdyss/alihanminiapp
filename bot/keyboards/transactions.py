@@ -107,8 +107,6 @@ def get_stripe_methods_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-# ... existing code ...
-
 def get_review_keyboard() -> InlineKeyboardMarkup:
     """Keyboard for Review step."""
     return InlineKeyboardMarkup(
@@ -128,6 +126,19 @@ def get_back_to_amount_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_transaction")]
+        ]
+    )
+    
+def get_payment_confirmation_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard for Payment Confirmation step."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Я оплатил", callback_data="i_paid")
+            ],
+            [
+                InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_transaction")
+            ]
         ]
     )
 
