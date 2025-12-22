@@ -82,7 +82,7 @@ export default function Balance() {
         </h1>
         <div className="balance-indicator">
           <span className="indicator-dot"></span>
-          <span>Synced just now</span>
+          <span>{t('syncedNow')}</span>
         </div>
       </div>
 
@@ -127,7 +127,7 @@ export default function Balance() {
                 <path d="M7 15l-2 5h3l1-3h2c2 0 4-2 4-4s-2-4-4-4H6l-1 6" />
               </svg>
             </div>
-            <span className="card-badge">Active</span>
+            <span className="card-badge">{t('activeBadge')}</span>
           </div>
           <span className="card-label">{t('paypalBalance')}</span>
           <strong className="card-value">{formatCurrency(balance.paypal)}</strong>
@@ -141,7 +141,7 @@ export default function Balance() {
                 <line x1="1" y1="10" x2="23" y2="10" />
               </svg>
             </div>
-            <span className="card-badge">Active</span>
+            <span className="card-badge">{t('activeBadge')}</span>
           </div>
           <span className="card-label">{t('stripeBalance')}</span>
           <strong className="card-value">{formatCurrency(balance.stripe)}</strong>

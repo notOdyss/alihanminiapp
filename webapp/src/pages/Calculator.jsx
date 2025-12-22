@@ -62,7 +62,7 @@ export default function Calculator() {
 
   const handleCreateTicket = async () => {
     if (!tg?.initData) {
-      addToast('Please open in Telegram to create a ticket', 'error')
+      addToast(t('createTicketError'), 'error')
       return
     }
 
@@ -84,11 +84,11 @@ export default function Calculator() {
 
       if (!response.ok) throw new Error('Failed to create ticket')
 
-      addToast('Ticket created successfully!', 'success')
+      addToast(t('ticketCreated'), 'success')
       setShowTicketModal(false)
     } catch (error) {
       console.error(error)
-      addToast('Error creating ticket', 'error')
+      addToast(t('ticketError'), 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -288,22 +288,35 @@ export default function Calculator() {
         title="Confirm Ticket"
       >
         <div className="ticket-modal-content">
-          <p>Create a ticket for <b>{formatCurrency(amount)}</b> via <b>{selectedMethod.name}</b>?</p>
-          <p className="ticket-subtext">You will receive approximately <b>{result?.total ? formatCurrency(result.total) : '$0.00'}</b>.</p>
+          <p dangerouslySetInnerHTML={{
+            __html: t('confirmTicketMsg', {
+              amount: `<b>${formatCurrency(amount)}</b>`,
+              method: `<b>${selectedMethod.name}</b>`
+            })
+          }} />
+          <p className="ticket-subtext" dangerouslySetInnerHTML={{
+            __html: t('receiveApprox', {
+              amount: `<b>${result?.total ? formatCurrency(result.total) : '$0.00'}</b>`
+            })
+          }} />
 
           <div className="modal-actions">
             <button
               className="modal-btn secondary"
               onClick={() => setShowTicketModal(false)}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
-              className="modal-btn primary"
+              className="modal-submit-btn"
               onClick={handleCreateTicket}
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Confirm Ticket'}
+              {isSubmitting ? (
+                <span className="btn-loader"></span>
+              ) : (
+                t('createTicket')
+              )}
             </button>
           </div>
         </div>

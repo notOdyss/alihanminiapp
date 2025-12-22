@@ -99,7 +99,7 @@ export default function Transactions() {
         </div>
         <div className="vip-content">
           <div className="vip-title">
-            <span>{progress >= 100 ? 'VIP Status Unlocked!' : t('vipThreshold')}</span>
+            <span>{progress >= 100 ? t('vipUnlocked') : t('vipThreshold')}</span>
             <strong>{formatCurrency(stats.totalSum)} / {formatCurrency(vipThreshold)}</strong>
           </div>
           <div className="progress-bar">
@@ -109,7 +109,7 @@ export default function Transactions() {
           </div>
           {progress < 100 && (
             <span className="vip-hint">
-              {formatCurrency(vipThreshold - stats.totalSum)} left to unlock VIP
+              {formatCurrency(vipThreshold - stats.totalSum)} {t('leftToUnlock')}
             </span>
           )}
         </div>

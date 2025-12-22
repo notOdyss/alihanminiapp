@@ -80,7 +80,7 @@ export default function Statistics() {
           </div>
 
           <div className="stat-box full-width-chart">
-            <span className="stat-title" style={{ marginBottom: '12px', display: 'block' }}>Spending Trend</span>
+            <span className="stat-title" style={{ marginBottom: '12px', display: 'block' }}>{t('spendingTrend')}</span>
             <div style={{ height: '120px' }}>
               <SimpleChart
                 data={[120, 300, 200, 450, 380, 600, 550, 800, 750]}

@@ -101,6 +101,21 @@ const translations = {
 
     // Loading
     loading: 'Загрузка...',
+
+    // Dynamic Stats & Messages
+    vipUnlocked: 'VIP Статус Разблокирован!',
+    leftToUnlock: 'осталось до VIP',
+    createTicketError: 'Пожалуйста, откройте в Telegram для создания тикета',
+    ticketCreated: 'Тикет успешно создан!',
+    ticketError: 'Ошибка при создании тикета',
+    spendingTrend: 'Тренд расходов',
+    createTicket: 'Создать тикет',
+    calculatorError: 'Ошибка калькулятора',
+    activeBadge: 'Активен',
+    syncedNow: 'Обновлено только что',
+    cancel: 'Отмена',
+    confirmTicketMsg: 'Создать тикет на {amount} через {method}?',
+    receiveApprox: 'Вы получите примерно {amount}.'
   },
   en: {
     // Navigation
@@ -200,6 +215,21 @@ const translations = {
 
     // Loading
     loading: 'Loading...',
+
+    // Dynamic Stats & Messages
+    vipUnlocked: 'VIP Status Unlocked!',
+    leftToUnlock: 'left to unlock VIP',
+    createTicketError: 'Please open in Telegram to create a ticket',
+    ticketCreated: 'Ticket created successfully!',
+    ticketError: 'Error creating ticket',
+    spendingTrend: 'Spending Trend',
+    createTicket: 'Create Ticket',
+    calculatorError: 'Calculator Error',
+    activeBadge: 'Active',
+    syncedNow: 'Synced just now',
+    cancel: 'Cancel',
+    confirmTicketMsg: 'Create a ticket for {amount} via {method}?',
+    receiveApprox: 'You will receive approximately {amount}.'
   }
 }
 
@@ -217,8 +247,12 @@ export function LanguageProvider({ children }) {
     setLanguage(prev => prev === 'ru' ? 'en' : 'ru')
   }
 
-  const t = (key) => {
-    return translations[language][key] || key
+  const t = (key, params = {}) => {
+    let str = translations[language][key] || key
+    Object.keys(params).forEach(param => {
+      str = str.replace(`{${param}}`, params[param])
+    })
+    return str
   }
 
   return (
