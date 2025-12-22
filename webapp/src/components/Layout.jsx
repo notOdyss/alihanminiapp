@@ -71,7 +71,6 @@ export default function Layout() {
     { id: 'calculator', path: '/calculator' },
     { id: 'balance', path: '/balance' },
     { id: 'statistics', path: '/statistics' },
-    { id: 'referral', path: '/referral' },
     { id: 'more', path: '/more' },
   ]
 

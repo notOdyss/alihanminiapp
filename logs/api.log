@@ -2,3 +2,12 @@ INFO:     Started server process [33241]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+Starting without SSL (HTTP only)
+INFO:     2.72.8.115:0 - "OPTIONS /api/balance HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "OPTIONS /api/statistics HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "OPTIONS /api/transactions?limit=50 HTTP/1.1" 200 OK
+DEBUG: Fetching transactions for @notodyss
+INFO:     2.72.8.115:0 - "GET /api/balance HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "GET /api/transactions?limit=50 HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "GET /api/statistics HTTP/1.1" 200 OK
+INFO:     2.72.8.115:0 - "OPTIONS /api/access-status HTTP/1.1" 200 OK
