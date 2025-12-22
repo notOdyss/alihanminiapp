@@ -792,33 +792,41 @@ async def update_referral_code(
     user_data = parse_telegram_init_data(auth)
     user_id = user_data["id"]
 
-    try:
-        # Validate new code format (alphanumeric, etc.)
-        if not request.new_code.isalnum() or len(request.new_code) < 3 or len(request.new_code) > 20:
-             raise HTTPException(status_code=400, detail="Invalid code format. Use 3-20 alphanumeric characters.")
+    user_repo = UserRepository(db)
+    db_user = await user_repo.get_by_id(user_id)
+    
+    if not db_user:
+         raise HTTPException(status_code=404, detail="User not found. Please use /start in the bot first.")
 
-        # Check turnover
-        transaction_repo = TransactionRepository(db)
-        stats = await transaction_repo.get_statistics(user_id)
+    # AUTO = generate a random code (no turnover requirement for first-time)
+    if request.new_code == "AUTO":
+        if db_user.referral_code:
+            # Already has a code
+            return {"new_code": db_user.referral_code}
         
-        total_turnover = stats['total_sum']
-        
-        if total_turnover < 300:
-            raise HTTPException(status_code=403, detail=f"Insufficient turnover (${total_turnover:.2f} < $300)")
+        # Generate new random code
+        new_code = await user_repo.generate_unique_referral_code()
+        await user_repo.set_referral_code(user_id, new_code)
+        return {"new_code": new_code}
 
-        user_repo = UserRepository(db)
-        success = await user_repo.set_referral_code(user_id, request.new_code.upper())
-        
-        if not success:
-             raise HTTPException(status_code=409, detail="Code already taken")
-             
-        return {"status": "success", "new_code": request.new_code.upper()}
+    # Custom code requires $300 turnover
+    if not request.new_code.isalnum() or len(request.new_code) < 3 or len(request.new_code) > 20:
+         raise HTTPException(status_code=400, detail="Неверный формат. Используйте 3-20 буквенно-цифровых символов.")
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        telegram_logger.error(f"Error updating referral code: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    transaction_repo = TransactionRepository(db)
+    stats = await transaction_repo.get_statistics(user_id)
+    
+    total_turnover = stats['total_sum']
+    
+    if total_turnover < 300:
+        raise HTTPException(status_code=403, detail=f"Недостаточный оборот (${total_turnover:.2f} < $300)")
+
+    success = await user_repo.set_referral_code(user_id, request.new_code.upper())
+    
+    if not success:
+         raise HTTPException(status_code=409, detail="Этот код уже занят")
+         
+    return {"status": "success", "new_code": request.new_code.upper()}
 
 
 if __name__ == "__main__":

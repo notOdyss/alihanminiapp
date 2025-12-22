@@ -199,6 +199,44 @@ export const DataProvider = ({ children }) => {
         return null
       }
     },
+    getReferralCode: async () => {
+      if (!tg?.initData) return null
+      try {
+        const headers = { 'X-Telegram-Init-Data': tg.initData, 'ngrok-skip-browser-warning': 'true' }
+        const res = await fetch(`${API_URL}/access-status`, { headers })
+        if (!res.ok) return null
+        const data = await res.json()
+        return data.referral_code || null
+      } catch (e) {
+        console.error('Failed to get referral code:', e)
+        return null
+      }
+    },
+    createReferralCode: async (customCode = null) => {
+      if (!tg?.initData) return null
+      try {
+        const headers = {
+          'X-Telegram-Init-Data': tg.initData,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        }
+        const res = await fetch(`${API_URL}/user/referral_code`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ new_code: customCode || 'AUTO' })
+        })
+        if (!res.ok) {
+          const err = await res.json()
+          console.error('Failed to create code:', err.detail)
+          return null
+        }
+        const data = await res.json()
+        return data.new_code
+      } catch (e) {
+        console.error('Failed to create referral code:', e)
+        return null
+      }
+    },
   }
 
   return (

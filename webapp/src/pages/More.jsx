@@ -49,8 +49,9 @@ export default function More() {
 
   const copyReferralCode = () => {
     if (referralCode) {
-      navigator.clipboard.writeText(referralCode)
-      addToast('Referral code copied!', 'success')
+      const link = `https://t.me/exchangeali_bot?start=${referralCode}`
+      navigator.clipboard.writeText(link)
+      addToast('Ссылка скопирована!', 'success')
     }
   }
 
