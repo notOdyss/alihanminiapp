@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Referral.css';
-import { useTelegram } from '../hooks/useTelegram';
+import { useTelegram } from '../context/TelegramContext';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://floy-effluvial-chaim.ngrok-free.dev/api';
 
