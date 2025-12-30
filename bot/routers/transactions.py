@@ -69,13 +69,18 @@ async def update_interface(
                 # If message has photo, edit caption
                 if event.message.photo:
                     await event.message.edit_caption(caption=text, reply_markup=keyboard, parse_mode="HTML")
+                    if state:
+                        await state.update_data(last_bot_msg_id=event.message.message_id)
                     return
                 else:
                     # If message is text but we want photo, delete and resend
                     await event.message.delete()
+                    # Fall through to send new message
             else:
                  # If no photo needed, edit text
                 await event.message.edit_text(text=text, reply_markup=keyboard, parse_mode="HTML")
+                if state:
+                    await state.update_data(last_bot_msg_id=event.message.message_id)
                 return
         except Exception as e:
             logger.warning(f"Edit failed, falling back to resend: {e}")
@@ -229,6 +234,15 @@ async def confirm_transaction(callback: CallbackQuery, state: FSMContext, sessio
         amount=str(result['input_amount']), # Storing input amount
         currency="USD"
     )
+
+    # Export to Google Sheets
+    try:
+        logger.info(f"Attempting to export transaction {transaction.id} to Google Sheets...")
+        from bot.services.sheets_writer import sheets_writer
+        await sheets_writer.append_ticket(transaction, db_user)
+        logger.info(f"Export to Google Sheets requested for transaction {transaction.id}")
+    except Exception as e:
+        logger.error(f"Sheets Export Failed: {e}", exc_info=True)
     
     # Notify Admin via Log Bot
     try:

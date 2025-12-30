@@ -117,9 +117,10 @@ export default function Calculator() {
     const p2pFee = (afterInternalFix * 3) / 100
     const beforeRounding = afterInternalFix - p2pFee
 
-    // Rounding
-    const fractional = beforeRounding - Math.floor(beforeRounding)
-    const total = fractional >= 0.5 ? Math.ceil(beforeRounding) : Math.floor(beforeRounding)
+    // Rounding - Removing rounding as per user request to show cents
+    // const fractional = beforeRounding - Math.floor(beforeRounding)
+    // const total = fractional >= 0.5 ? Math.ceil(beforeRounding) : Math.floor(beforeRounding)
+    const total = beforeRounding
 
     // Ensure accurate total summing for distribution
     const totalFees = exchangeFee + internalFeePercent + internalFeeFix + p2pFee

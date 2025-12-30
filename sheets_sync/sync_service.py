@@ -120,11 +120,22 @@ class GoogleSheetsSync:
             return None
 
     def parse_decimal(self, value: str, field_name: str = "") -> Decimal:
-        """Parse decimal with scientific notation handling"""
+        """Parse decimal with cleaner handling for various locales"""
         if not value:
             return Decimal('0')
             
-        cleaned = str(value).replace('$', '').replace(',', '').replace(' ', '').strip()
+        # Basic cleanup: remove currency symbols and spaces
+        cleaned = str(value).replace('$', '').replace(' ', '').strip()
+        
+        # Handle comma vs dot
+        if ',' in cleaned:
+             if '.' in cleaned:
+                 # Both present (e.g. 1,000.50): Assume comma is thousand separator
+                 cleaned = cleaned.replace(',', '')
+             else:
+                 # Only comma (e.g. 105,02): Assume comma is decimal separator
+                 cleaned = cleaned.replace(',', '.')
+                 
         try:
             val = Decimal(cleaned)
             # Cap huge values (e.g. scientific notation 9E+20) to 0 or valid max

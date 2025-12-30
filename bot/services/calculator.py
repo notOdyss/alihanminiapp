@@ -52,8 +52,9 @@ class FeeCalculator:
         p2p_fee = (after_internal_fixed * 3.0) / 100
         before_rounding = after_internal_fixed - p2p_fee
         
-        # Rounding strategy: round to nearest
-        total_payout = round(before_rounding, 2)
+        # Rounding strategy: No rounding (User request)
+        # However, we must ensure it's not negative
+        total_payout = before_rounding
         if total_payout < 0:
             total_payout = 0.0
             

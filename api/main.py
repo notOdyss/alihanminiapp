@@ -514,6 +514,19 @@ async def create_transaction(
         currency=request.currency
     )
 
+    # Export to Google Sheets
+    try:
+        from bot.services.sheets_writer import sheets_writer
+        # Need to fetch full user object if possible, or create minimal user obj
+        # In this endpoint we only have user_id and username
+        user_obj = type('User', (), {
+            'id': user_id,
+            'username': username.replace('@', '') if username else None
+        })
+        await sheets_writer.append_ticket(transaction, user_obj)
+    except Exception as e:
+        print(f"Sheets Export Failed: {e}")
+
     # Convert SQLAlchemy model to Pydantic model for response
     # We need to manually construct the User object for logging since we only have ID/data
     tg_user_obj = type('TgUser', (), {

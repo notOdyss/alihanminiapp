@@ -10,6 +10,11 @@ export const TelegramProvider = ({ children }) => {
     const telegram = window.Telegram?.WebApp
     if (telegram) {
       telegram.ready()
+      try {
+        telegram.expand()
+      } catch (e) {
+        console.log('Expand failed (dev mode?)', e)
+      }
       setTg(telegram)
 
       const tgUser = telegram.initDataUnsafe?.user
